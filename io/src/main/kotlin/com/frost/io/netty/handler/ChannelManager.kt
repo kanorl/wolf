@@ -47,20 +47,21 @@ class ChannelManager : ChannelDuplexHandler() {
         val channel = ctx.channel()
         anonymousChannels.remove(channel.id())
         val identity = channel.identity()
-        identity ?: identifiedChannels.remove(identity) ?: eventBus.post(ChannelClosedEvent(identity!!))
+        identity?.let { identifiedChannels.remove(identity)?.let { eventBus.post(ChannelClosedEvent(identity)) } }
         super.channelInactive(ctx)
     }
 
     fun identify(channelId: ChannelId, identity: Long) {
         val channel = anonymousChannels[channelId] ?: return
-        // todo distinct event
-        val event = if (identifiedChannels.replace(identity, channel) != null) ChannelReplacedEvent(identity) else ChannelBindEvent(identity)
+        val prev = identifiedChannels.replace(identity, channel)
+        prev?.removeIdentity()
+        prev?.close()
         // check after add
         if (!channel.isOpen || anonymousChannels[channelId] != channel) {
             identifiedChannels.remove(identity, channel)
             return
         }
-        eventBus.post(event)
+        eventBus.post(ChannelBindEvent(identity, prev != null))
     }
 
     fun channel(channelId: ChannelId): Channel? = anonymousChannels[channelId]
@@ -75,6 +76,10 @@ fun Channel.identity(): Long? {
     return this.attr(identityKey).get()
 }
 
+fun Channel.removeIdentity() {
+    return this.attr(identityKey).remove()
+}
+
 fun Channel.identity(identity: Long) {
     this.attr(identityKey).setIfAbsent(identity) ?: throw IllegalStateException("identity[$identity] is already set.")
 }
@@ -83,7 +88,5 @@ fun Channel.identified(): Boolean {
     return this.identity() != null
 }
 
-class ChannelClosedEvent(val identity: Long) : Event
-open class ChannelIdentifiedEvent(val identity: Long) : Event
-class ChannelBindEvent(identity: Long) : ChannelIdentifiedEvent(identity)
-class ChannelReplacedEvent(identity: Long) : ChannelIdentifiedEvent(identity)
+data class ChannelClosedEvent(val identity: Long) : Event
+data class ChannelBindEvent(val identity: Long, val rebind: Boolean) : Event
