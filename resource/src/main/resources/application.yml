@@ -1,0 +1,4 @@
+resource:
+    reader: json
+    path: "resource"
+

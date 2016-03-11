@@ -1,0 +1,77 @@
+group 'com.frost'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+buildscript {
+    ext.kotlin_version = '1.0.0'
+    ext.spring_boot_version = '1.3.2.RELEASE'
+    repositories {
+        maven { url 'http://maven.oschina.net/content/groups/public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version")
+    }
+}
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
+
+ext {
+    log4j_version = '2.5'
+    guava_version = '19.0'
+    netty_version = '4.1.0.CR2'
+    protobuf_version = '2.6.1'
+    typetools_version = '0.4.4'
+    reflections_version = '0.9.10'
+    commons_lang_version = '3.4'
+    validator_collection_version = '2.1.6'
+}
+
+ext.libraries = [
+        netty               : [
+                "io.netty:netty-all:$netty_version",
+                "io.netty:netty-transport-native-epoll:$netty_version"
+        ],
+        typetools           : "net.jodah:typetools:$typetools_version",
+        hibernate_validator : [
+                "org.hibernate:hibernate-validator",
+                "org.hibernate:hibernate-validator-annotation-processor"
+        ],
+        validator_collection: "cz.jirutka.validator:validator-collection:$validator_collection_version"
+]
+
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'kotlin'
+    apply plugin: 'spring-boot'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        maven { url 'http://maven.oschina.net/content/groups/public/' }
+        mavenCentral()
+    }
+
+    dependencies {
+        testCompile "junit:junit"
+        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+        compile "org.apache.logging.log4j:log4j-core"
+        compile "org.apache.logging.log4j:log4j-slf4j-impl"
+        compile "com.google.guava:guava:$guava_version"
+        compile("org.springframework.boot:spring-boot-starter") {
+            exclude module: "spring-boot-starter-logging"
+        }
+        compile("org.springframework.boot:spring-boot-starter-log4j") {
+            exclude module: "slf4j-log4j12"
+        }
+        compile "com.google.protobuf:protobuf-java:$protobuf_version"
+        compile "org.reflections:reflections:$reflections_version"
+        compile "org.apache.commons:commons-lang3:$commons_lang_version"
+    }
+}

@@ -1,0 +1,5 @@
+rootProject.name = 'wolf'
+include 'common'
+include 'io'
+include 'resource'
+include 'entity'

@@ -1,0 +1,6 @@
+entity:
+  persistence:
+    interval: 0
+  cache:
+    size: 5000
+    stat: true
