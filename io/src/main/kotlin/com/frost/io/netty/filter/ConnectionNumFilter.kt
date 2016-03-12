@@ -23,7 +23,7 @@ abstract class ConnectionNumFilter : ChannelFilter() {
     }
 
     override fun accept(ctx: ChannelHandlerContext): Boolean {
-        // TODO waiting queue
+        // TODO enqueue
         return num.get() < socketSetting.connectionsMax
     }
 }

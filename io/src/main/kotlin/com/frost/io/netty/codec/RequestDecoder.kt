@@ -13,7 +13,10 @@ class RequestDecoder(byteOrder: ByteOrder?, maxFrameLength: Int, lengthFieldOffs
     constructor(maxFrameLength: Int, lengthFieldOffset: Int, lengthFieldLength: Int, failFast: Boolean) : this(ByteOrder.BIG_ENDIAN, maxFrameLength, lengthFieldOffset, lengthFieldLength, 0, 0, failFast)
 
     override fun decode(ctx: ChannelHandlerContext, `in`: ByteBuf?): Any? {
-        val byteBuf = super.decode(ctx, `in`) as ByteBuf? ?: return null
+        val byteBuf = super.decode(ctx, `in`) ?: return null
+        if (byteBuf !is ByteBuf) {
+            return null;
+        }
 
         val module = byteBuf.readShort()
         val cmd = byteBuf.readByte()

@@ -9,27 +9,25 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
-interface Codec<T> {
-    fun encode(obj: T?): ByteArray
-    fun decode(data: ByteArray, type: Class<T>): T
+interface Codec<in In> {
+    val name: String
+    fun encode(obj: In?): ByteArray
+    fun <Out : In> decode(data: ByteArray, type: Class<Out>): Out
 }
 
-class ProtoBufCodec<T : MessageLite> : Codec<T> {
+@Suppress("UNCHECKED_CAST")
+object ProtoBufCodec : Codec<MessageLite> {
+    override val name: String = "protobuf"
 
-    companion object {
-        private val defaultInstances = ConcurrentHashMap<Class<out MessageLite>, MessageLite>()
-    }
+    private val defaultInstances = ConcurrentHashMap<Class<out MessageLite>, MessageLite>()
 
-    private fun defaultInstance(type: Class<T>): MessageLite = defaultInstances.computeIfAbsent(type, { type ->
-        type.getMethod("getDefaultInstance").invoke(null) as MessageLite
-    })
+    private fun <T : MessageLite> defaultInstance(type: Class<T>): T = defaultInstances.computeIfAbsent(type, { it.getMethod("getDefaultInstance").invoke(null) as T }) as T
 
-    override fun encode(obj: T?): ByteArray {
+    override fun encode(obj: MessageLite?): ByteArray {
         return obj?.toByteArray() ?: emptyByteArray
     }
 
-    @Suppress("UNCHECKED_CAST")
-    override fun decode(data: ByteArray, type: Class<T>): T = defaultInstance(type).newBuilderForType().mergeFrom(data).build() as T
+    override fun <T : MessageLite> decode(data: ByteArray, type: Class<T>): T = defaultInstance(type).newBuilderForType().mergeFrom(data).build() as T
 }
 
 @Component
@@ -40,11 +38,9 @@ class CodecFactoryBean : FactoryBean<Codec<*>> {
 
     override fun getObjectType(): Class<*> = Codec::class.java
 
-    override fun getObject(): Codec<*> = try {
-        Codec::class.java.subTypes().first { it.simpleName.startsWith(setting.codec, true) }.newInstance()
-    } catch(e: Exception) {
-        throw IllegalStateException("Codec[${setting.codec}] not found in ${Codec::class.java.subTypes().map { it.simpleName }}")
-    }
+    override fun getObject(): Codec<*> =
+            Codec::class.java.subTypes().map { it.kotlin.objectInstance }.first { it?.name == setting.codec }
+                    ?: throw IllegalStateException("Codec[${setting.codec}] not found in ${Codec::class.java.subTypes().map { it.kotlin.objectInstance?.name }}")
 
     override fun isSingleton(): Boolean = true
 }

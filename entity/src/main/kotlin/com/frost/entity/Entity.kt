@@ -20,7 +20,7 @@ abstract class Entity<T : Comparable<T>> : Comparable<Entity<T>> {
 
     final fun dbVersion(version: Int) = dbVersion.set(version)
 
-    final override fun compareTo(other: Entity<T>): Int = ComparisonChain.start().compare(this.id, other.id).compare(this.javaClass.name, other.javaClass.name).result()
+    final override fun compareTo(other: Entity<T>): Int = ComparisonChain.start().compare(this.javaClass.name, other.javaClass.name).compare(this.id, other.id).result()
 
     override fun equals(other: Any?): Boolean = when {
         other == null -> false

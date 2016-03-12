@@ -74,9 +74,7 @@ class InvokerManager : BeanPostProcessor {
                         identityNotRequiredCommands.add(command)
                     }
                 },
-                { f ->
-                    f.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(f.type)
-                }
+                { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
         )
         return bean;
     }

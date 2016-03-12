@@ -1,4 +1,4 @@
-rootProject.name = 'wolf'
+rootProject.name = 'frostwolf'
 include 'common'
 include 'io'
 include 'resource'

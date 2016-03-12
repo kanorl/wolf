@@ -47,7 +47,7 @@ class ChannelManager : ChannelDuplexHandler() {
         val channel = ctx.channel()
         anonymousChannels.remove(channel.id())
         val identity = channel.identity()
-        identity?.let { identifiedChannels.remove(identity)?.let { eventBus.post(ChannelClosedEvent(identity)) } }
+        identity?.let { identifiedChannels.remove(it)?.let { eventBus.post(ChannelClosedEvent(identity)) } }
         super.channelInactive(ctx)
     }
 

@@ -20,6 +20,6 @@ class IdentityParam : Param<Long> {
     override fun getValue(request: Request): Long = request.channel.identity() ?: -1
 }
 
-class RequestParam<T>(val type: Class<T>, val decode: (ByteArray, Class<T>) -> T) : Param<T> {
-    override fun getValue(request: Request): T = decode(request.body, type)
+class RequestParam<T>(val type: Class<T>, val decoder: (ByteArray, Class<T>) -> T) : Param<T> {
+    override fun getValue(request: Request): T = decoder(request.body, type)
 }

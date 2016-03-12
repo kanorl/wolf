@@ -1,45 +1,45 @@
 package com.frost.resource
 
+import com.frost.common.logging.getLogger
 import com.frost.common.reflect.subTypes
 import org.springframework.beans.factory.FactoryBean
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 
-abstract class Reader {
+interface Reader {
 
-    @Value("\${resource.path}")
-    protected lateinit var baseDir: String
+    val name: String
 
-    fun <T : Resource> read(type: Class<T>): List<T> {
-        val resources = read(type, baseDir)
+    fun <T : Resource> read(type: Class<T>, path: String): List<T> {
+        val resources = read0(type, path)
         resources.forEach { it.afterPropertiesSet() }
         return resources
     }
 
-    protected abstract fun <T : Resource> read(type: Class<T>, baseDir: String): List<T>
+    fun <T : Resource> read0(type: Class<T>, path: String): List<T>
 }
 
-internal class EmptyReader : Reader() {
-    override fun <T : Resource> read(type: Class<T>, baseDir: String): List<T> = emptyList()
+internal object EmptyReader : Reader {
+    override val name: String = "empty"
+
+    override fun <T : Resource> read0(type: Class<T>, path: String): List<T> = emptyList()
 }
 
 @Component
 class ConfigurationReaderFactoryBean : FactoryBean<Reader> {
+    val logger by getLogger()
 
     @Value("\${resource.reader}")
     private var readerName: String = "empty"
-    @Autowired
-    private lateinit var ctx: ApplicationContext
 
     override fun getObjectType(): Class<*>? = Reader::class.java
 
     override fun isSingleton(): Boolean = true
 
-    override fun getObject(): Reader? = try {
-        ctx.autowireCapableBeanFactory.createBean(Reader::class.java.subTypes().first { c -> c.simpleName.startsWith(readerName, true) })
-    } catch(e: Exception) {
-        throw IllegalStateException("[$readerName] Reader not found.")
+    override fun getObject(): Reader? {
+        val reader = Reader::class.java.subTypes().map { it.kotlin.objectInstance }.first { it?.name == readerName }
+        reader ?: throw IllegalStateException("[$readerName] Reader not found in ${Reader::class.java.subTypes().map { it.kotlin.objectInstance?.name }}")
+        logger.info("Resource reader is {}", reader.javaClass.simpleName)
+        return reader
     }
 }

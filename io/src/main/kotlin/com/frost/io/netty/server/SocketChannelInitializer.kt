@@ -49,7 +49,7 @@ class SocketChannelInitializer : ChannelInitializer<SocketChannel>() {
         pipeline.addLast("decoder", RequestDecoder(socketSetting.frameLengthMax, 0, 4, true))
                 .addLast("encoder", prepender)
                 .addLast("trafficController", ChannelTrafficController(socketSetting.msgNumPerSecond))
-                .addLast("channel", channelManager)
+                .addLast("channelManager", channelManager)
                 .addLast("writer", writer)
                 .addLast("idleMonitor", IdleStateHandler(0, 0, socketSetting.idleSeconds))
                 .addLast(executor, "handler", handler)

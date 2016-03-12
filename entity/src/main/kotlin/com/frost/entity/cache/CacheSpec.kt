@@ -16,14 +16,14 @@ annotation class CacheSpec(
         val sizeFactor: Double = 1.0,
 
         /**
-         * 预加载条
+         * 预加载
          */
         val preLoad: String = "",
 
         /**
          * 持久化策略
          */
-        val persistenceInterval: PersistencePolicy = PersistencePolicy.Immediately
+        val persistencePolicy: PersistencePolicy = PersistencePolicy.Immediately
 )
 
 enum class PersistencePolicy {

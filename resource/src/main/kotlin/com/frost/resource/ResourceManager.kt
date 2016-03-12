@@ -4,6 +4,7 @@ import com.frost.common.logging.getLogger
 import com.frost.common.reflect.genericType
 import com.frost.common.reflect.subTypes
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextRefreshedEvent
@@ -22,12 +23,14 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     private lateinit var reader: Reader
     @Autowired
     private lateinit var validator: Validator
+    @Value("\${resource.path}")
+    private lateinit var baseDir: String
     private var containers = mapOf<Class<out Resource>, ContainerImpl<Resource>>()
     private var injectedContainers = mapOf<Class<out Resource>, DelegatingContainer<Resource>>()
 
     @PostConstruct
     private fun init() {
-        Resource::class.java.subTypes().forEach { containers += (it to ContainerImpl(reader.read(it))) }
+        Resource::class.java.subTypes().forEach { containers += (it to ContainerImpl(reader.read(it, baseDir))) }
         validate(containers)
     }
 
@@ -68,7 +71,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
         val prev = containers
         var reloaded: Map<Class<out Resource>, ContainerImpl<out Resource>>
         try {
-            reloaded = classes.associate { (it to  ContainerImpl(reader.read(it))) }
+            reloaded = classes.associate { (it to  ContainerImpl(reader.read(it, baseDir))) }
             val current = HashMap(prev) + reloaded
             this.containers = current
 
