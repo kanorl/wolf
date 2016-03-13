@@ -37,8 +37,8 @@ class ConfigurationReaderFactoryBean : FactoryBean<Reader> {
     override fun isSingleton(): Boolean = true
 
     override fun getObject(): Reader? {
-        val reader = Reader::class.java.subTypes().map { it.kotlin.objectInstance }.first { it?.name == readerName }
-        reader ?: throw IllegalStateException("[$readerName] Reader not found in ${Reader::class.java.subTypes().map { it.kotlin.objectInstance?.name }}")
+        val reader = Reader::class.java.subTypes().map { it.kotlin.objectInstance }.find { it?.name == readerName }
+        reader ?: throw IllegalStateException("[$readerName] Reader not found. Available readers are ${Reader::class.java.subTypes().map { it.kotlin.objectInstance?.name ?: "" }}")
         logger.info("Resource reader is {}", reader.javaClass.simpleName)
         return reader
     }

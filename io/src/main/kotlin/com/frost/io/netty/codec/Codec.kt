@@ -1,6 +1,7 @@
 package com.frost.io.netty.codec
 
 import com.frost.common.lang.emptyByteArray
+import com.frost.common.logging.getLogger
 import com.frost.common.reflect.subTypes
 import com.frost.io.netty.config.SocketSetting
 import com.google.protobuf.MessageLite
@@ -32,15 +33,19 @@ object ProtoBufCodec : Codec<MessageLite> {
 
 @Component
 class CodecFactoryBean : FactoryBean<Codec<*>> {
+    val logger by getLogger()
 
     @Autowired
     private lateinit var setting: SocketSetting
 
     override fun getObjectType(): Class<*> = Codec::class.java
 
-    override fun getObject(): Codec<*> =
-            Codec::class.java.subTypes().map { it.kotlin.objectInstance }.first { it?.name == setting.codec }
-                    ?: throw IllegalStateException("Codec[${setting.codec}] not found in ${Codec::class.java.subTypes().map { it.kotlin.objectInstance?.name }}")
+    override fun getObject(): Codec<*> {
+        val codec = Codec::class.java.subTypes().map { it.kotlin.objectInstance }.first { it?.name == setting.codec }
+        codec?: throw IllegalStateException("Codec[${setting.codec}] not found. Available Codecs are ${Codec::class.java.subTypes().map { it.kotlin.objectInstance?.name }}")
+        logger.info("Codec is {}", codec.javaClass.simpleName)
+        return codec
+    }
 
     override fun isSingleton(): Boolean = true
 }

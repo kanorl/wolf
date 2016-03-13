@@ -2,11 +2,12 @@ package com.frost.resource
 
 import cz.jirutka.validator.collection.CommonEachValidator
 import cz.jirutka.validator.collection.constraints.EachConstraint
+import org.springframework.beans.factory.FactoryBean
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.stereotype.Component
 import org.springframework.validation.FieldError
 import org.springframework.validation.ObjectError
+import org.springframework.validation.Validator
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean
 import javax.validation.Constraint
 import javax.validation.ConstraintValidator
@@ -14,10 +15,13 @@ import javax.validation.ConstraintValidatorContext
 import javax.validation.Payload
 import kotlin.reflect.KClass
 
-@Configuration
-open class ResourceConfiguration {
-    @Bean
-    open fun validator(): LocalValidatorFactoryBean = LocalValidatorFactoryBean()
+@Component
+open class ResourceFactoryBean : FactoryBean<Validator> {
+    override fun getObjectType(): Class<*>? = Validator::class.java
+
+    override fun isSingleton(): Boolean = true
+
+    override fun getObject(): Validator? = LocalValidatorFactoryBean()
 }
 
 class ValidateFailedException : RuntimeException {

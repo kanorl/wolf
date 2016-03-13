@@ -29,6 +29,7 @@ ext {
     reflections_version = '0.9.10'
     commons_lang_version = '3.4'
     validator_collection_version = '2.1.6'
+    jackson_version = '2.7.2'
 }
 
 ext.libraries = [
@@ -41,7 +42,16 @@ ext.libraries = [
                 "org.hibernate:hibernate-validator",
                 "org.hibernate:hibernate-validator-annotation-processor"
         ],
-        validator_collection: "cz.jirutka.validator:validator-collection:$validator_collection_version"
+        validator_collection: "cz.jirutka.validator:validator-collection:$validator_collection_version",
+        jackson             : [
+                "com.fasterxml.jackson.core:jackson-core:$jackson_version",
+                "com.fasterxml.jackson.core:jackson-databind:$jackson_version",
+                "com.fasterxml.jackson.core:jackson-annotations:$jackson_version",
+                "com.fasterxml.jackson.datatype:jackson-datatype-guava:$jackson_version",
+                "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:$jackson_version",
+                "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jackson_version",
+                "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version"
+        ]
 ]
 
 allprojects {
@@ -74,6 +84,8 @@ allprojects {
         compile "org.reflections:reflections:$reflections_version"
         compile "org.apache.commons:commons-lang3:$commons_lang_version"
         compile "org.springframework.boot:spring-boot-configuration-processor"
+        compile libraries.jackson
     }
 }
+
 compileJava.dependsOn(processResources)
