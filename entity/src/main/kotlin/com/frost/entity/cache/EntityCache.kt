@@ -1,8 +1,8 @@
 package com.frost.entity.cache
 
-import com.frost.entity.Entity
+import com.frost.entity.AbstractEntity
 
-interface EntityCache<K : Comparable<K>, E : Entity<K>> {
+interface EntityCache<K : Comparable<K>, E : AbstractEntity<K>> {
 
     operator fun get(id: K): E?
 
@@ -10,5 +10,5 @@ interface EntityCache<K : Comparable<K>, E : Entity<K>> {
 
     fun update(entity: E)
 
-    fun remove(entity: E)
+    fun remove(id: K)
 }

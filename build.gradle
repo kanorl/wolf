@@ -30,6 +30,7 @@ ext {
     commons_lang_version = '3.4'
     validator_collection_version = '2.1.6'
     jackson_version = '2.7.2'
+    mongo_version = '3.2.2'
 }
 
 ext.libraries = [
@@ -80,12 +81,20 @@ allprojects {
         compile("org.springframework.boot:spring-boot-starter-log4j") {
             exclude module: "slf4j-log4j12"
         }
+        compile("org.springframework.boot:spring-boot-starter-data-mongodb") {
+            exclude module: "mongo-java-driver"
+        }
+        compile "org.springframework.boot:spring-boot-configuration-processor"
         compile "com.google.protobuf:protobuf-java:$protobuf_version"
         compile "org.reflections:reflections:$reflections_version"
         compile "org.apache.commons:commons-lang3:$commons_lang_version"
-        compile "org.springframework.boot:spring-boot-configuration-processor"
         compile libraries.jackson
+        compile "org.mongodb:mongo-java-driver:$mongo_version"
     }
+    configurations {
+        compile.exclude group: "ch.qos.logback"
+    }
+    compileJava.dependsOn(processResources)
 }
 
 compileJava.dependsOn(processResources)
