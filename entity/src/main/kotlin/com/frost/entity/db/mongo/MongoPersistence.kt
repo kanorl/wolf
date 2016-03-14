@@ -1,13 +1,13 @@
 package com.frost.entity.db.mongo
 
 import com.frost.entity.AbstractEntity
-import com.frost.entity.db.Persistence
+import com.frost.entity.db.Persist
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.stereotype.Component
 
 @Component
-class MongoPersistence : Persistence {
+class MongoPersistence : Persist {
 
     @Autowired
     lateinit var template: MongoTemplate

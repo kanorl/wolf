@@ -30,7 +30,7 @@ internal interface PersistService {
 internal class DefaultPersistService : PersistService {
 
     @Autowired
-    private lateinit var Persistence: Persistence
+    private lateinit var Persistence: Persist
     @Autowired
     private lateinit var setting: EntitySetting
     private lateinit var executors: Array<ExecutorService>
@@ -63,7 +63,7 @@ internal class ScheduledPersistService : PersistService {
     private val logger by getLogger()
 
     @Autowired
-    private lateinit var Persistence: Persistence
+    private lateinit var Persistence: Persist
     @Autowired
     private lateinit var delegate: DefaultPersistService
     @Autowired

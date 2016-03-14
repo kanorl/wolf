@@ -2,7 +2,7 @@ package com.frost.entity.db
 
 import com.frost.entity.AbstractEntity
 
-interface Persistence {
+interface Persist {
 
     fun <T : AbstractEntity<*>> save(entity: T)
 
