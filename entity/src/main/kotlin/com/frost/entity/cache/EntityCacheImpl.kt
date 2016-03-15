@@ -2,15 +2,12 @@ package com.frost.entity.cache
 
 import com.frost.common.logging.getLogger
 import com.frost.common.toJson
-import com.frost.entity.AbstractEntity
 import com.frost.entity.EntitySetting
+import com.frost.entity.IEntity
 import com.frost.entity.db.PersistService
 import com.frost.entity.db.Querier
 import com.google.common.base.Function
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheBuilderSpec
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.RemovalListener
+import com.google.common.cache.*
 import com.google.common.collect.Sets.newConcurrentHashSet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.ConfigurableBeanFactory
@@ -21,11 +18,9 @@ import javax.annotation.PostConstruct
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-class EntityCacheImpl<ID : Comparable<ID>, E : AbstractEntity<ID>>(private val clazz: Class<E>) : EntityCache<ID, E> {
+class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val clazz: Class<E>, private val persistService: PersistService) : EntityCache<ID, E> {
     private val logger by getLogger()
 
-    @Autowired
-    private lateinit var persistService: PersistService
     @Autowired
     private lateinit var querier: Querier
     @Autowired
@@ -38,15 +33,25 @@ class EntityCacheImpl<ID : Comparable<ID>, E : AbstractEntity<ID>>(private val c
         val loaded = querier.one(it, clazz)
         if (removing.contains(it)) null else updating.remove(it)?.let { it } ?: loaded
     })
-    private val cache = CacheBuilder.from(cacheBuilderSpec()).removalListener<ID, E> (RemovalListener {
-        if (it.wasEvicted() && it.value!!.edited()) {
-            updating.put(it.key!!, it.value!!)
+    private lateinit var cache: LoadingCache<ID, E>
+
+    @PostConstruct
+    private fun init() {
+        cache = CacheBuilder.from(cacheBuilderSpec()).removalListener<ID, E> (RemovalListener {
+            if (it.wasEvicted() && it.value!!.edited()) {
+                updating.put(it.key!!, it.value!!)
+            }
+            if (!it.wasEvicted()) {
+                removing.add(it.key)
+                persistService.remove(it.value!!, { removing.remove(it.key) })
+            }
+        }).build(dbLoader)
+
+        val where = clazz.getAnnotation(CacheSpec::class.java).preLoad
+        if (where.isNotEmpty()) {
+            querier.query(clazz, where).forEach { cache.put(it.id, it) }
         }
-        if (!it.wasEvicted()) {
-            removing.add(it.key)
-            persistService.remove(it.value!!, { removing.remove(it.key) })
-        }
-    }).build(dbLoader)
+    }
 
     private fun cacheBuilderSpec(): CacheBuilderSpec {
         val cacheSpec = clazz.getAnnotation(CacheSpec::class.java)
@@ -54,14 +59,6 @@ class EntityCacheImpl<ID : Comparable<ID>, E : AbstractEntity<ID>>(private val c
         val concurrencyLevel = if (maximumSize >= setting.cacheSize) 16 else 4
         val spec = "initialCapacity=$maximumSize, maximumSize=$maximumSize, concurrencyLevel=$concurrencyLevel, expireAfterAccess=30m${if (setting.cacheStat) ", recordStats" else ""}"
         return CacheBuilderSpec.parse(spec)
-    }
-
-    @PostConstruct
-    private fun init() {
-        val where = clazz.getAnnotation(CacheSpec::class.java).preLoad
-        if (where.isNotEmpty()) {
-            querier.query(clazz, where).forEach { cache.put(it.id, it) }
-        }
     }
 
     override fun get(id: ID): E? = try {

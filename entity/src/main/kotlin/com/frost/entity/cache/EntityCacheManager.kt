@@ -2,9 +2,9 @@ package com.frost.entity.cache
 
 import com.frost.common.reflect.genericTypes
 import com.frost.common.reflect.safeSet
-import com.frost.entity.AbstractEntity
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
+import com.frost.entity.EntitySetting
+import com.frost.entity.db.ImmediatePersistService
+import com.frost.entity.db.ScheduledPersistService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.ApplicationContext
@@ -17,16 +17,25 @@ class EntityCacheManager : BeanPostProcessor {
 
     @Autowired
     private lateinit var ctx: ApplicationContext
+    @Autowired
+    private lateinit var immediatePersist: ImmediatePersistService
+    @Autowired
+    private lateinit var schedulePersist: ScheduledPersistService
+    @Autowired
+    private lateinit var setting: EntitySetting
 
-    private var entityCaches = CacheBuilder.newBuilder().build(CacheLoader.from<Class<AbstractEntity<Comparable<Any>>>, EntityCache<Comparable<Any>, AbstractEntity<Comparable<Any>>>> { clazz -> EntityCacheImpl(clazz!!) })
+    private var entityCaches = hashMapOf<Class<*>, Any>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? = bean
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         ReflectionUtils.doWithFields(bean.javaClass,
                 {
-                    val clazz = it.genericTypes()[1] as Class<AbstractEntity<Comparable<Any>>>
-                    it.safeSet(bean, entityCaches.getUnchecked(clazz))
+                    val clazz = it.genericTypes()[1]
+                    val cacheSpec = clazz.getAnnotation(CacheSpec::class.java)
+                    val scheduled = cacheSpec.persistencePolicy == PersistencePolicy.Scheduled && setting.persistInterval > 0
+                    val cache = entityCaches.computeIfAbsent(clazz, { ctx.getBean(EntityCacheImpl::class.java, it, if (scheduled) schedulePersist else immediatePersist) })
+                    it.safeSet(bean, cache)
                 },
                 { EntityCache::class.java.isAssignableFrom(it.type) }
         )

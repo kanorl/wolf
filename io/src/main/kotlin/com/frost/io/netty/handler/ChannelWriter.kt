@@ -49,8 +49,16 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
 
     private fun toByteBuf(response: Response): ByteBuf {
         val bytes = combine(response.command.bytes, response.code.bytes(), codec.encode(response.msg))
-        val data = if (bytes.size > socketSetting.compressThreshold) compressor?.compress(bytes) ?: bytes else bytes
-        return PooledByteBufAllocator.DEFAULT.buffer(data.size).writeBytes(data)
+        val compressor = this.compressor
+        val (result, compressed) = if (socketSetting.compressThreshold > 0 && bytes.size > socketSetting.compressThreshold && compressor != null) {
+            (compressor.compress(bytes) to true)
+        } else {
+            (bytes to false)
+        }
+        val buffer = PooledByteBufAllocator.DEFAULT.buffer(result.size + (if (compressed) 1 else 0))
+        buffer.writeBytes(result)
+        buffer.writeByte((if (compressed) 1 else 0))
+        return buffer
     }
 }
 

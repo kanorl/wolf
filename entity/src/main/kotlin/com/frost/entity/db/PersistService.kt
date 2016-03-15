@@ -5,8 +5,8 @@ import com.frost.common.concurrent.lock.lock
 import com.frost.common.concurrent.shutdownAndAwaitTermination
 import com.frost.common.lang.abs
 import com.frost.common.logging.getLogger
-import com.frost.entity.AbstractEntity
 import com.frost.entity.EntitySetting
+import com.frost.entity.IEntity
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
@@ -17,20 +17,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
-internal interface PersistService {
+interface PersistService {
 
-    fun save(entity: AbstractEntity<*>, callback: (() -> Unit)? = null)
+    fun save(entity: IEntity<*>, callback: (() -> Unit)? = null)
 
-    fun update(entity: AbstractEntity<*>, callback: (() -> Unit)? = null)
+    fun update(entity: IEntity<*>, callback: (() -> Unit)? = null)
 
-    fun remove(entity: AbstractEntity<*>, callback: (() -> Unit)? = null)
+    fun remove(entity: IEntity<*>, callback: (() -> Unit)? = null)
 }
 
 @Component
-internal class DefaultPersistService : PersistService {
+class ImmediatePersistService : PersistService {
 
     @Autowired
-    private lateinit var Persistence: Persist
+    private lateinit var persistence: Persistence
     @Autowired
     private lateinit var setting: EntitySetting
     private lateinit var executors: Array<ExecutorService>
@@ -41,16 +41,16 @@ internal class DefaultPersistService : PersistService {
         executors = (0 until setting.persistPoolSize).map { Executors.newSingleThreadExecutor(NamedThreadFactory("persistence")) }.toTypedArray()
     }
 
-    override fun save(entity: AbstractEntity<*>, callback: (() -> Unit)?) {
-        submit(PersistTask.saveTask(Persistence, entity, callback))
+    override fun save(entity: IEntity<*>, callback: (() -> Unit)?) {
+        submit(PersistTask.saveTask(persistence, entity, callback))
     }
 
-    override fun update(entity: AbstractEntity<*>, callback: (() -> Unit)?) {
-        submit(PersistTask.updateTask(Persistence, entity, callback))
+    override fun update(entity: IEntity<*>, callback: (() -> Unit)?) {
+        submit(PersistTask.updateTask(persistence, entity, callback))
     }
 
-    override fun remove(entity: AbstractEntity<*>, callback: (() -> Unit)?) {
-        submit(PersistTask.removeTask(Persistence, entity, callback))
+    override fun remove(entity: IEntity<*>, callback: (() -> Unit)?) {
+        submit(PersistTask.removeTask(persistence, entity, callback))
     }
 
     internal fun submit(task: PersistTask) {
@@ -59,13 +59,13 @@ internal class DefaultPersistService : PersistService {
 }
 
 @Component
-internal class ScheduledPersistService : PersistService {
+class ScheduledPersistService : PersistService {
     private val logger by getLogger()
 
     @Autowired
-    private lateinit var Persistence: Persist
+    private lateinit var persistence: Persistence
     @Autowired
-    private lateinit var delegate: DefaultPersistService
+    private lateinit var delegate: ImmediatePersistService
     @Autowired
     private lateinit var setting: EntitySetting
 
@@ -87,25 +87,25 @@ internal class ScheduledPersistService : PersistService {
     }
 
 
-    override fun save(entity: AbstractEntity<*>, callback: (() -> Unit)?) {
+    override fun save(entity: IEntity<*>, callback: (() -> Unit)?) {
         val map = mapFor(entity)
-        val task = PersistTask.saveTask(Persistence, entity, callback)
+        val task = PersistTask.saveTask(persistence, entity, callback)
         r.lock { map.put(entity.id, task) }
     }
 
-    override fun update(entity: AbstractEntity<*>, callback: (() -> Unit)?) {
+    override fun update(entity: IEntity<*>, callback: (() -> Unit)?) {
         val map = mapFor(entity)
-        val task = PersistTask.saveTask(Persistence, entity, callback)
+        val task = PersistTask.saveTask(persistence, entity, callback)
         r.lock { map.putIfAbsent(entity.id, task) }
     }
 
-    override fun remove(entity: AbstractEntity<*>, callback: (() -> Unit)?) {
+    override fun remove(entity: IEntity<*>, callback: (() -> Unit)?) {
         val map = mapFor(entity)
-        val task = PersistTask.saveTask(Persistence, entity, callback)
+        val task = PersistTask.saveTask(persistence, entity, callback)
         r.lock { map.put(entity.id, task) }
     }
 
-    private fun mapFor(entity: AbstractEntity<*>): ConcurrentHashMap<Any, PersistTask> = cache[entity.javaClass] ?: cache.computeIfAbsent(entity.javaClass, { ConcurrentHashMap() })
+    private fun mapFor(entity: IEntity<*>): ConcurrentHashMap<Any, PersistTask> = cache[entity.javaClass] ?: cache.computeIfAbsent(entity.javaClass, { ConcurrentHashMap() })
 
     private fun persist() {
         var tasks = emptyList<PersistTask>()

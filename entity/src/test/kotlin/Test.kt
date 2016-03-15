@@ -1,5 +1,7 @@
 package com.frost
 
+import com.frost.entity.EntityIdGenerator
+import com.frost.entity.User
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.context.ConfigurableApplicationContext
@@ -27,6 +29,9 @@ fun main(args: Array<String>) {
 
     context!!.registerShutdownHook()
     context.start()
+
+    val generator = context.getBean(EntityIdGenerator::class.java)
+    println(generator.next(User::class.java, 1, 1))
 
     TimeUnit.SECONDS.sleep(60)
     context.close()
