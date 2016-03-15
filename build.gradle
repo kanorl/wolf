@@ -93,6 +93,9 @@ allprojects {
     }
     configurations {
         compile.exclude group: "ch.qos.logback"
+        compile.exclude group: "org.json"
+        compile.exclude group: "org.jboss.logging"
+        compile.exclude group: "log4j"
     }
     compileJava.dependsOn(processResources)
 }
