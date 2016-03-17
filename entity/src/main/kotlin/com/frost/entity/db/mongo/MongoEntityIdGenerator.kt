@@ -12,15 +12,23 @@ import com.mongodb.BasicDBObject
 import com.mongodb.DBObject
 import com.mongodb.QueryBuilder
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicLong
+import javax.annotation.PostConstruct
 
 @Component
+@ConditionalOnMissingBean(EntityIdGenerator::class)
 class MongoEntityIdGenerator : EntityIdGenerator {
     @Autowired
     private lateinit var setting: EntitySetting
     @Autowired
     private lateinit var querier: Querier
+
+    @PostConstruct
+    private fun init() {
+        println()
+    }
 
     private val cache: LoadingCache<Class<out IEntity<Long>>, LoadingCache<Short, LoadingCache<Short, AtomicLong>>> = CacheBuilder.newBuilder().build(
             CacheLoader.from(Function { clazz ->

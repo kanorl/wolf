@@ -4,7 +4,6 @@ import com.frost.common.concurrent.cpuNum
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.NestedConfigurationProperty
 import org.springframework.stereotype.Component
-import javax.annotation.PostConstruct
 
 @Component
 @ConfigurationProperties("entity")
@@ -15,11 +14,6 @@ class EntitySetting {
     var persistence: PersistSetting = PersistSetting()
     @NestedConfigurationProperty
     var id: IdSetting = IdSetting()
-
-    @PostConstruct
-    private fun init() {
-        println()
-    }
 
     val persistPoolSize by lazy { persistence.poolSize }
     val persistInterval by lazy { persistence.interval }
