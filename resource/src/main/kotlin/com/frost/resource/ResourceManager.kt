@@ -37,12 +37,15 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     private fun validate(containers: Map<Class<out Resource>, ContainerImpl<out Resource>>) {
         val resources = containers.mapValues { it.value.sorted }
         resources.forEach {
-            val duplicate = it.value.groupBy { it.getId() }.filter { it.value.size != 1 }.keys
-            if (!duplicate.isEmpty()) throw DuplicateResourceException(it.key, duplicate)
+            val illegalIds = it.value.map { it.id }.filter { it <= 0 }.distinct()
+            if (illegalIds.isNotEmpty()) throw IllegalResourceIdException(it.key, illegalIds)
+
+            val duplicate = it.value.groupBy { it.id }.filter { it.value.size != 1 }.keys
+            if (duplicate.isNotEmpty()) throw DuplicateResourceException(it.key, duplicate)
         }
 
         val errors = resources.values.flatten().flatMap {
-            val bindingResult = DataBinder(it, "${it.javaClass.simpleName}[${it.getId()}]").bindingResult
+            val bindingResult = DataBinder(it, "${it.javaClass.simpleName}[${it.id}]").bindingResult
             validator.validate(it, bindingResult)
             bindingResult.allErrors
         }

@@ -12,17 +12,20 @@ fun between(origin: Int, bound: Int): Int = nextInt(origin, bound + 1)
 
 fun nextBoolean(): Boolean = current().nextBoolean()
 
-fun <T> random(c: Collection<T>, totalWeight: Int? = null, weigher: (T) -> Int): T? {
-    if (c.isEmpty()) return null
-    val total = totalWeight ?: c.sumBy { t -> weigher(t) }
-    if (total <= 0) return null
-    var random = nextInt(total)
-    for (t in c) {
-        val weigh = weigher(t)
-        if (weigh > random) {
-            return t
+fun <E : Any> Collection<E>.random(totalWeight: Int? = null, randomByIndexOnFail: Boolean = true, weigher: (E) -> Int): E? {
+    if (this.isEmpty()) return null
+    val total = totalWeight ?: this.sumBy { t -> weigher(t) }
+    var result: E? = null
+    if (total > 0) {
+        var random = nextInt(total)
+        for (t in this) {
+            val weigh = weigher(t)
+            if (weigh > random) {
+                result = t
+                break
+            }
+            random -= weigh
         }
-        random -= weigh
     }
-    return c.elementAt(nextInt(c.size))
+    return result ?: if (randomByIndexOnFail) this.elementAt(nextInt(this.size)) else null
 }

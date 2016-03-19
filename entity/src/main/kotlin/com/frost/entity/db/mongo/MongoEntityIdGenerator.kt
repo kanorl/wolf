@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicLong
-import javax.annotation.PostConstruct
 
 @Component
 @ConditionalOnMissingBean(EntityIdGenerator::class)
@@ -25,11 +24,6 @@ class MongoEntityIdGenerator : EntityIdGenerator {
     @Autowired
     private lateinit var querier: Querier
 
-    @PostConstruct
-    private fun init() {
-        println()
-    }
-
     private val cache: LoadingCache<Class<out IEntity<Long>>, LoadingCache<Short, LoadingCache<Short, AtomicLong>>> = CacheBuilder.newBuilder().build(
             CacheLoader.from(Function { clazz ->
                 CacheBuilder.newBuilder().build(
@@ -37,7 +31,7 @@ class MongoEntityIdGenerator : EntityIdGenerator {
                             CacheBuilder.newBuilder().build(
                                     CacheLoader.from (Function { server ->
                                         val range = range(platform, server)
-                                        val where = QueryBuilder.start("_id").greaterThan(range.first).and("_id").lessThan(range.last).get()
+                                        val where = QueryBuilder.start("_id").greaterThanEquals(range.first).and("_id").lessThanEquals(range.last).get()
                                         val result = querier.query(clazz, BasicDBObject("_id", 1), where, BasicDBObject("_id", -1), 1, { any -> (any as DBObject).get("_id") as Long })
                                         val next = if (result.isEmpty()) range.first else result[0] + 1
                                         AtomicLong(next)

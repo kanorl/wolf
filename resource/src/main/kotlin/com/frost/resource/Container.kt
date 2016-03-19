@@ -1,5 +1,6 @@
 package com.frost.resource
 
+import com.frost.common.random
 import java.util.*
 
 interface Container<T : Resource> {
@@ -15,7 +16,7 @@ interface Container<T : Resource> {
 
 internal class ContainerImpl<T : Resource>(beans: List<T>) : Container<T> {
     val totalWeight = beans.sumBy { it.weight() }
-    val map = beans.associateBy { it.getId() }
+    val map = beans.associateBy { it.id }
     val sorted = TreeSet<T>(beans)
 
     override operator fun get(id: Int): T? = map[id]
@@ -30,7 +31,7 @@ internal class ContainerImpl<T : Resource>(beans: List<T>) : Container<T> {
 
     override fun list(filter: ((T) -> Boolean)?): List<T> = if (filter == null) sorted.toList() else sorted.filter { filter(it) }
 
-    override fun random(): T? = com.frost.common.random(sorted, totalWeight) { it.weight() }
+    override fun random(): T? = sorted.random (totalWeight) { it.weight() }
 }
 
 internal class DelegatingContainer<T : Resource>() : Container<T> {

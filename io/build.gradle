@@ -5,4 +5,5 @@ dependencies {
     compile project(":common")
     compile netty
     compile protobuf
+    compile protostuff
 }
