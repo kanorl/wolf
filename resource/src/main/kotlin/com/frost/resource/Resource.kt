@@ -2,9 +2,11 @@ package com.frost.resource
 
 import com.frost.common.toJson
 import com.google.common.collect.ComparisonChain
+import javax.validation.constraints.Min
 
 abstract class Resource : Comparable<Resource> {
 
+    @Min(1)
     val id: Int = 0
 
     fun weight(): Int = 0

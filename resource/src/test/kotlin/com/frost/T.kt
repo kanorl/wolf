@@ -1,7 +1,7 @@
 package com.frost
 
 import com.frost.resource.Resource
-import com.frost.resource.ValidateFailedException
+import com.frost.resource.ResourceInvalidException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.validation.DataBinder
@@ -20,7 +20,7 @@ class T {
         val bindingResult = DataBinder(item, "item").bindingResult
         validator.validate(item, bindingResult)
         if (bindingResult.hasErrors()) {
-            throw ValidateFailedException(bindingResult.allErrors)
+            throw ResourceInvalidException(bindingResult.allErrors)
         }
     }
 }

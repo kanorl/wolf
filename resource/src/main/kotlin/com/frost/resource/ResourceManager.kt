@@ -1,5 +1,7 @@
 package com.frost.resource
 
+import com.frost.common.event.Event
+import com.frost.common.event.EventBus
 import com.frost.common.logging.getLogger
 import com.frost.common.reflect.genericType
 import com.frost.common.reflect.subTypes
@@ -12,7 +14,6 @@ import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
 import org.springframework.validation.DataBinder
 import org.springframework.validation.Validator
-import java.util.*
 import javax.annotation.PostConstruct
 
 @Component
@@ -20,13 +21,17 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     val logger by getLogger()
 
     @Autowired
+    private lateinit var eventBus: EventBus
+    @Autowired
     private lateinit var reader: Reader
     @Autowired
     private lateinit var validator: Validator
     @Value("\${resource.path}")
     private lateinit var baseDir: String
+
+
     private var containers = mapOf<Class<out Resource>, ContainerImpl<Resource>>()
-    private var injectedContainers = mapOf<Class<out Resource>, DelegatingContainer<Resource>>()
+    private var injectedContainers = hashMapOf<Class<out Resource>, DelegatingContainer<Resource>>()
 
     @PostConstruct
     private fun init() {
@@ -37,9 +42,6 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     private fun validate(containers: Map<Class<out Resource>, ContainerImpl<out Resource>>) {
         val resources = containers.mapValues { it.value.sorted }
         resources.forEach {
-            val illegalIds = it.value.map { it.id }.filter { it <= 0 }.distinct()
-            if (illegalIds.isNotEmpty()) throw IllegalResourceIdException(it.key, illegalIds)
-
             val duplicate = it.value.groupBy { it.id }.filter { it.value.size != 1 }.keys
             if (duplicate.isNotEmpty()) throw DuplicateResourceException(it.key, duplicate)
         }
@@ -49,7 +51,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
             validator.validate(it, bindingResult)
             bindingResult.allErrors
         }
-        if (errors.isNotEmpty()) throw ValidateFailedException(errors)
+        if (errors.isNotEmpty()) throw ResourceInvalidException(errors)
     }
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? = bean
@@ -60,7 +62,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
                 {
                     val clazz = it.genericType() as Class<out Resource>
                     val container = DelegatingContainer<Resource>()
-                    injectedContainers += (clazz to container)
+                    injectedContainers.put(clazz, container)
                     ReflectionUtils.makeAccessible(it)
                     it.set(bean, container)
                 },
@@ -69,37 +71,48 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
         return bean
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun reload(vararg classNames: String) {
+        val array = try {
+            classNames.map { Class.forName(it) as  Class<out Resource> }.toTypedArray()
+        } catch(e: Exception) {
+            logger.error(e.message, e)
+            throw e
+        }
+        reload(*array)
+    }
+
     @Synchronized
     fun reload(vararg classes: Class<out Resource>) {
-        val prev = containers
-        var reloaded: Map<Class<out Resource>, ContainerImpl<out Resource>>
-        try {
-            reloaded = classes.associate { (it to  ContainerImpl(reader.read(it, baseDir))) }
-            val current = HashMap(prev) + reloaded
-            this.containers = current
-
-            validate(reloaded)
-            refresh(reloaded)
-        } catch(e: Exception) {
-            this.containers = prev
-            logger.error("Rollback from resource reload${classes.map { it.simpleName }}: ${e.message}", e)
+        for (clazz in classes) {
+            try {
+                val reloaded = mapOf(clazz to ContainerImpl(reader.read(clazz, baseDir)))
+                validate(reloaded)
+                containers + reloaded
+                logger.info("Resource reload success: ${clazz.simpleName}")
+            } catch(e: Exception) {
+                logger.error("Resource reload failed: ${clazz.simpleName}", e)
+                throw e
+            }
         }
+        refresh(classes.associate { it to containers[it]!! })
+        logger.info("Resource reload complete.")
     }
 
     override fun onApplicationEvent(event: ContextRefreshedEvent?) {
         refresh(containers)
+        eventBus.post(ResourceRefreshed)
     }
 
     @Synchronized
     private fun refresh(containers: Map<Class<out Resource>, ContainerImpl<Resource>>) {
-        val prev = containers.keys.filter { injectedContainers.containsKey(it) }.associate { (it to injectedContainers[it]!!.delegatee) }
-        try {
-            containers.forEach { injectedContainers[it.key]?.delegatee = it.value }
-        } catch(e: Exception) {
-            prev.forEach { injectedContainers[it.key]!!.delegatee = it.value }
-            logger.error("Rollback from resource refresh: ${e.message}", e)
+        containers.forEach {
+            val delegatingContainer = injectedContainers.computeIfAbsent(it.key, { DelegatingContainer<Resource>() })
+            delegatingContainer.delegatee = it.value
         }
     }
 
     internal fun container(clazz: Class<*>): Container<*>? = containers[clazz]
 }
+
+object ResourceRefreshed : Event

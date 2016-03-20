@@ -24,7 +24,7 @@ open class ResourceFactoryBean : FactoryBean<Validator> {
     override fun getObject(): Validator? = LocalValidatorFactoryBean()
 }
 
-class ValidateFailedException : RuntimeException {
+class ResourceInvalidException : RuntimeException {
     companion object {
         private fun errorsToString(errors: List<ObjectError>): String {
             val b = StringBuilder()
