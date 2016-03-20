@@ -318,7 +318,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Doug Lea
  * @since 1.5
  */
-public class ThreadPoolExecutor extends AbstractExecutorService {
+class ThreadPoolExecutor extends AbstractExecutorService {
     /**
      * The main pool control state, ctl, is an atomic integer packing
      * two conceptual fields

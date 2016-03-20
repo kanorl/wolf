@@ -26,7 +26,6 @@ class T {
 }
 
 internal class Item : Resource() {
-    override fun getId(): Int = 1
 
     //    @Min(1)
     var num = 0
@@ -46,7 +45,6 @@ internal class Item : Resource() {
 }
 
 class Reward : Resource() {
-    override fun getId(): Int = 1
     //    @Min(0)
     var num = 1
 }
