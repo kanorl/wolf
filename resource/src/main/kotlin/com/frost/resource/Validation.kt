@@ -44,11 +44,6 @@ class DuplicateResourceException(private val msg: String) : RuntimeException(msg
     constructor(clazz: Class<*>, duplicate: Collection<Int>) : this("Duplicate id$duplicate in ${clazz.simpleName}")
 }
 
-class IllegalResourceIdException private constructor(val msg: String) : RuntimeException(msg) {
-    constructor(clazz: Class<*>, illegalIds: Collection<Int>) : this("Illegal Id$illegalIds in ${clazz.simpleName}")
-}
-
-
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = arrayOf(ReferToValidator::class))

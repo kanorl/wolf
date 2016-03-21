@@ -52,7 +52,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * asynchronous tasks, due to reduced per-task invocation overhead,
  * and they provide a means of bounding and managing the resources,
  * including threads, consumed when executing a collection of tasks.
- * Each {@code ThreadPoolExecutor} also maintains some basic
+ * Each {@code ThreadPoolExecutor2} also maintains some basic
  * statistics, such as the number of completed tasks.
  * <p>
  * <p>To be useful across a wide range of contexts, this class
@@ -71,7 +71,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * <p>
  * <dt>Core and maximum pool sizes</dt>
  * <p>
- * <dd>A {@code ThreadPoolExecutor} will automatically adjust the
+ * <dd>A {@code ThreadPoolExecutor2} will automatically adjust the
  * pool size (see {@link #getPoolSize})
  * according to the bounds set by
  * corePoolSize (see {@link #getCorePoolSize}) and
@@ -205,25 +205,25 @@ import java.util.concurrent.locks.ReentrantLock;
  * the Executor uses finite bounds for both maximum threads and work queue
  * capacity, and is saturated.  In either case, the {@code execute} method
  * invokes the {@link
- * com.frost.common.concurrent.RejectedExecutionHandler#rejectedExecution(Runnable, ThreadPoolExecutor)}
- * method of its {@link com.frost.common.concurrent.RejectedExecutionHandler}.  Four predefined handler
+ * RejectedExecutionHandler2#rejectedExecution(Runnable, ThreadPoolExecutor2)}
+ * method of its {@link RejectedExecutionHandler2}.  Four predefined handler
  * policies are provided:
  * <p>
  * <ol>
  * <p>
- * <li> In the default {@link ThreadPoolExecutor.AbortPolicy}, the
+ * <li> In the default {@link ThreadPoolExecutor2.AbortPolicy}, the
  * handler throws a runtime {@link RejectedExecutionException} upon
  * rejection. </li>
  * <p>
- * <li> In {@link ThreadPoolExecutor.CallerRunsPolicy}, the thread
+ * <li> In {@link ThreadPoolExecutor2.CallerRunsPolicy}, the thread
  * that invokes {@code execute} itself runs the task. This provides a
  * simple feedback control mechanism that will slow down the rate that
  * new tasks are submitted. </li>
  * <p>
- * <li> In {@link ThreadPoolExecutor.DiscardPolicy}, a task that
+ * <li> In {@link ThreadPoolExecutor2.DiscardPolicy}, a task that
  * cannot be executed is simply dropped.  </li>
  * <p>
- * <li>In {@link ThreadPoolExecutor.DiscardOldestPolicy}, if the
+ * <li>In {@link ThreadPoolExecutor2.DiscardOldestPolicy}, if the
  * executor is not shut down, the task at the head of the work queue
  * is dropped, and then execution is retried (which can fail again,
  * causing this to be repeated.) </li>
@@ -231,7 +231,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * </ol>
  * <p>
  * It is possible to define and use other kinds of {@link
- * com.frost.common.concurrent.RejectedExecutionHandler} classes. Doing so requires some care
+ * RejectedExecutionHandler2} classes. Doing so requires some care
  * especially when policies are designed to work only under particular
  * capacity or queuing policies. </dd>
  * <p>
@@ -276,7 +276,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * here is a subclass that adds a simple pause/resume feature:
  * <p>
  * <pre> {@code
- * class PausableThreadPoolExecutor extends ThreadPoolExecutor {
+ * class PausableThreadPoolExecutor extends ThreadPoolExecutor2 {
  *   private boolean isPaused;
  *   private ReentrantLock pauseLock = new ReentrantLock();
  *   private Condition unpaused = pauseLock.newCondition();
@@ -318,7 +318,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Doug Lea
  * @since 1.5
  */
-class ThreadPoolExecutor extends AbstractExecutorService {
+public class ThreadPoolExecutor2 extends AbstractExecutorService {
     /**
      * The main pool control state, ctl, is an atomic integer packing
      * two conceptual fields
@@ -521,7 +521,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
     /**
      * Handler called when saturated or shutdown in execute.
      */
-    private volatile com.frost.common.concurrent.RejectedExecutionHandler handler;
+    private volatile RejectedExecutionHandler2 handler;
 
     /**
      * Timeout in nanoseconds for idle threads waiting for work.
@@ -554,7 +554,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
     /**
      * The default rejected execution handler
      */
-    private static final com.frost.common.concurrent.RejectedExecutionHandler defaultHandler =
+    private static final RejectedExecutionHandler2 defaultHandler =
             new AbortPolicy();
 
     /**
@@ -1196,7 +1196,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
     // Public constructors and methods
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
+     * Creates a new {@code ThreadPoolExecutor2} with the given initial
      * parameters and default thread factory and rejected execution handler.
      * It may be more convenient to use one of the {@link Executors} factory
      * methods instead of this general purpose constructor.
@@ -1219,17 +1219,17 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      *                                  {@code maximumPoolSize < corePoolSize}
      * @throws NullPointerException     if {@code workQueue} is null
      */
-    public ThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              BlockingQueue<Runnable> workQueue) {
+    public ThreadPoolExecutor2(int corePoolSize,
+                               int maximumPoolSize,
+                               long keepAliveTime,
+                               TimeUnit unit,
+                               BlockingQueue<Runnable> workQueue) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
                 Executors.defaultThreadFactory(), defaultHandler);
     }
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
+     * Creates a new {@code ThreadPoolExecutor2} with the given initial
      * parameters and default rejected execution handler.
      *
      * @param corePoolSize    the number of threads to keep in the pool, even
@@ -1253,18 +1253,18 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException     if {@code workQueue}
      *                                  or {@code threadFactory} is null
      */
-    public ThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              BlockingQueue<Runnable> workQueue,
-                              ThreadFactory threadFactory) {
+    public ThreadPoolExecutor2(int corePoolSize,
+                               int maximumPoolSize,
+                               long keepAliveTime,
+                               TimeUnit unit,
+                               BlockingQueue<Runnable> workQueue,
+                               ThreadFactory threadFactory) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
                 threadFactory, defaultHandler);
     }
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
+     * Creates a new {@code ThreadPoolExecutor2} with the given initial
      * parameters and default thread factory.
      *
      * @param corePoolSize    the number of threads to keep in the pool, even
@@ -1288,18 +1288,18 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException     if {@code workQueue}
      *                                  or {@code handler} is null
      */
-    public ThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              BlockingQueue<Runnable> workQueue,
-                              com.frost.common.concurrent.RejectedExecutionHandler handler) {
+    public ThreadPoolExecutor2(int corePoolSize,
+                               int maximumPoolSize,
+                               long keepAliveTime,
+                               TimeUnit unit,
+                               BlockingQueue<Runnable> workQueue,
+                               RejectedExecutionHandler2 handler) {
         this(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue,
                 Executors.defaultThreadFactory(), handler);
     }
 
     /**
-     * Creates a new {@code ThreadPoolExecutor} with the given initial
+     * Creates a new {@code ThreadPoolExecutor2} with the given initial
      * parameters.
      *
      * @param corePoolSize    the number of threads to keep in the pool, even
@@ -1325,13 +1325,13 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException     if {@code workQueue}
      *                                  or {@code threadFactory} or {@code handler} is null
      */
-    public ThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              BlockingQueue<Runnable> workQueue,
-                              ThreadFactory threadFactory,
-                              com.frost.common.concurrent.RejectedExecutionHandler handler) {
+    public ThreadPoolExecutor2(int corePoolSize,
+                               int maximumPoolSize,
+                               long keepAliveTime,
+                               TimeUnit unit,
+                               BlockingQueue<Runnable> workQueue,
+                               ThreadFactory threadFactory,
+                               RejectedExecutionHandler2 handler) {
         if (corePoolSize < 0 ||
                 maximumPoolSize <= 0 ||
                 maximumPoolSize < corePoolSize ||
@@ -1353,11 +1353,11 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * <p>
      * If the task cannot be submitted for execution, either because this
      * executor has been shutdown or because its capacity has been reached,
-     * the task is handled by the current {@code RejectedExecutionHandler}.
+     * the task is handled by the current {@code RejectedExecutionHandler2}.
      *
      * @param command the task to execute
      * @throws RejectedExecutionException at discretion of
-     *                                    {@code RejectedExecutionHandler}, if the task
+     *                                    {@code RejectedExecutionHandler2}, if the task
      *                                    cannot be accepted for execution
      * @throws NullPointerException       if {@code command} is null
      */
@@ -1538,7 +1538,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * @throws NullPointerException if handler is null
      * @see #getRejectedExecutionHandler
      */
-    public void setRejectedExecutionHandler(com.frost.common.concurrent.RejectedExecutionHandler handler) {
+    public void setRejectedExecutionHandler(RejectedExecutionHandler2 handler) {
         if (handler == null)
             throw new NullPointerException();
         this.handler = handler;
@@ -1548,9 +1548,9 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * Returns the current handler for unexecutable tasks.
      *
      * @return the current handler
-     * @see #setRejectedExecutionHandler(com.frost.common.concurrent.RejectedExecutionHandler)
+     * @see #setRejectedExecutionHandler(RejectedExecutionHandler2)
      */
-    public com.frost.common.concurrent.RejectedExecutionHandler getRejectedExecutionHandler() {
+    public RejectedExecutionHandler2 getRejectedExecutionHandler() {
         return handler;
     }
 
@@ -1992,7 +1992,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * or the underlying exception if a task has been aborted:
      * <p>
      * <pre> {@code
-     * class ExtendedExecutor extends ThreadPoolExecutor {
+     * class ExtendedExecutor extends ThreadPoolExecutor2 {
      *   // ...
      *   protected void afterExecute(Runnable r, Throwable t) {
      *     super.afterExecute(r, t);
@@ -2036,7 +2036,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * unless the executor has been shut down, in which case the task
      * is discarded.
      */
-    public static class CallerRunsPolicy implements com.frost.common.concurrent.RejectedExecutionHandler {
+    public static class CallerRunsPolicy implements RejectedExecutionHandler2 {
         /**
          * Creates a {@code CallerRunsPolicy}.
          */
@@ -2050,7 +2050,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
          * @param r the runnable task requested to be executed
          * @param e the executor attempting to execute this task
          */
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor2 e) {
             if (!e.isShutdown()) {
                 r.run();
             }
@@ -2061,7 +2061,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * A handler for rejected tasks that throws a
      * {@code RejectedExecutionException}.
      */
-    public static class AbortPolicy implements com.frost.common.concurrent.RejectedExecutionHandler {
+    public static class AbortPolicy implements RejectedExecutionHandler2 {
         /**
          * Creates an {@code AbortPolicy}.
          */
@@ -2075,7 +2075,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
          * @param e the executor attempting to execute this task
          * @throws RejectedExecutionException always
          */
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor2 e) {
             throw new RejectedExecutionException("Task " + r.toString() +
                     " rejected from " +
                     e.toString());
@@ -2086,7 +2086,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * A handler for rejected tasks that silently discards the
      * rejected task.
      */
-    public static class DiscardPolicy implements com.frost.common.concurrent.RejectedExecutionHandler {
+    public static class DiscardPolicy implements RejectedExecutionHandler2 {
         /**
          * Creates a {@code DiscardPolicy}.
          */
@@ -2099,7 +2099,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
          * @param r the runnable task requested to be executed
          * @param e the executor attempting to execute this task
          */
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor2 e) {
         }
     }
 
@@ -2108,7 +2108,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
      * request and then retries {@code execute}, unless the executor
      * is shut down, in which case the task is discarded.
      */
-    public static class DiscardOldestPolicy implements com.frost.common.concurrent.RejectedExecutionHandler {
+    public static class DiscardOldestPolicy implements RejectedExecutionHandler2 {
         /**
          * Creates a {@code DiscardOldestPolicy} for the given executor.
          */
@@ -2124,7 +2124,7 @@ class ThreadPoolExecutor extends AbstractExecutorService {
          * @param r the runnable task requested to be executed
          * @param e the executor attempting to execute this task
          */
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor e) {
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor2 e) {
             if (!e.isShutdown()) {
                 e.getQueue().poll();
                 e.execute(r);

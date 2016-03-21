@@ -46,11 +46,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
- * A {@link ThreadPoolExecutor} that can additionally schedule
+ * A {@link ThreadPoolExecutor2} that can additionally schedule
  * commands to run after a given delay, or to execute
  * periodically. This class is preferable to {@link Timer}
  * when multiple worker threads are needed, or when the additional
- * flexibility or capabilities of {@link ThreadPoolExecutor} (which
+ * flexibility or capabilities of {@link ThreadPoolExecutor2} (which
  * this class extends) are required.
  * <p>
  * <p>Delayed tasks execute no sooner than they are enabled, but
@@ -76,7 +76,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * href="package-summary.html#MemoryVisibility"><i>happen-before</i></a>
  * those of subsequent ones.
  * <p>
- * <p>While this class inherits from {@link ThreadPoolExecutor}, a few
+ * <p>While this class inherits from {@link ThreadPoolExecutor2}, a few
  * of the inherited tuning methods are not useful for it. In
  * particular, because it acts as a fixed-sized pool using
  * {@code corePoolSize} threads and an unbounded queue, adjustments
@@ -86,7 +86,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * without threads to handle tasks once they become eligible to run.
  * <p>
  * <p><b>Extension notes:</b> This class overrides the
- * {@link ThreadPoolExecutor#execute(Runnable) execute} and
+ * {@link ThreadPoolExecutor2#execute(Runnable) execute} and
  * {@link AbstractExecutorService#submit(Runnable) submit}
  * methods to generate internal {@link ScheduledFuture} objects to
  * control per-task delays and scheduling.  To preserve
@@ -124,10 +124,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * @since 1.5
  */
 public class MillisBasedScheduledThreadPoolExecutor
-        extends ThreadPoolExecutor
+        extends ThreadPoolExecutor2
         implements ScheduledExecutorService {
 
-    private static final RejectedExecutionHandler defaultHandler = new CallerRunsPolicy();
+    private static final RejectedExecutionHandler2 defaultHandler = new CallerRunsPolicy();
 
     public MillisBasedScheduledThreadPoolExecutor(int corePoolSize, long maxAwaitMills) {
         super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
@@ -139,12 +139,12 @@ public class MillisBasedScheduledThreadPoolExecutor
                 new DelayedWorkQueue(maxAwaitMills), threadFactory, defaultHandler);
     }
 
-    public MillisBasedScheduledThreadPoolExecutor(int corePoolSize, long maxAwaitMills, ThreadFactory threadFactory, RejectedExecutionHandler rejectedExecutionHandler) {
+    public MillisBasedScheduledThreadPoolExecutor(int corePoolSize, long maxAwaitMills, ThreadFactory threadFactory, RejectedExecutionHandler2 rejectedExecutionHandler) {
         super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
                 new DelayedWorkQueue(maxAwaitMills), threadFactory, rejectedExecutionHandler);
     }
     /*
-     * This class specializes ThreadPoolExecutor implementation by
+     * This class specializes ThreadPoolExecutor2 implementation by
      *
      * 1. Using a custom task type, ScheduledFutureTask for
      *    tasks, even those that don't require scheduling (i.e.,
@@ -156,7 +156,7 @@ public class MillisBasedScheduledThreadPoolExecutor
      *    unbounded DelayQueue. The lack of capacity constraint and
      *    the fact that corePoolSize and maximumPoolSize are
      *    effectively identical simplifies some execution mechanics
-     *    (see delayedExecute) compared to ThreadPoolExecutor.
+     *    (see delayedExecute) compared to ThreadPoolExecutor2.
      *
      * 3. Supporting optional run-after-shutdown parameters, which
      *    leads to overrides of shutdown methods to remove and cancel
@@ -488,7 +488,7 @@ public class MillisBasedScheduledThreadPoolExecutor
      * @throws IllegalArgumentException if {@code corePoolSize < 0}
      * @throws NullPointerException     if {@code handler} is null
      */
-//    public ScheduledThreadPoolExecutorV8(int corePoolSize, RejectedExecutionHandler handler) {
+//    public ScheduledThreadPoolExecutorV8(int corePoolSize, RejectedExecutionHandler2 handler) {
 //        super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
 //                new DelayedWorkQueue(), handler);
 //    }
@@ -509,7 +509,7 @@ public class MillisBasedScheduledThreadPoolExecutor
      */
 //    public ScheduledThreadPoolExecutorV8(int corePoolSize,
 //                                         ThreadFactory threadFactory,
-//                                         RejectedExecutionHandler handler) {
+//                                         RejectedExecutionHandler2 handler) {
 //        super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
 //                new DelayedWorkQueue(), threadFactory, handler);
 //    }
@@ -635,13 +635,13 @@ public class MillisBasedScheduledThreadPoolExecutor
      * {@link ScheduledFuture}, not the {@code command} itself.
      * <p>
      * <p>A consequence of the use of {@code ScheduledFuture} objects is
-     * that {@link ThreadPoolExecutor#afterExecute afterExecute} is always
+     * that {@link ThreadPoolExecutor2#afterExecute afterExecute} is always
      * called with a null second {@code Throwable} argument, even if the
      * {@code command} terminated abruptly.  Instead, the {@code Throwable}
      * thrown by such a task can be obtained via {@link Future#get}.
      *
      * @throws RejectedExecutionException at discretion of
-     *                                    {@code RejectedExecutionHandler}, if the task
+     *                                    {@code RejectedExecutionHandler2}, if the task
      *                                    cannot be accepted for execution because the
      *                                    executor has been shut down
      * @throws NullPointerException       {@inheritDoc}

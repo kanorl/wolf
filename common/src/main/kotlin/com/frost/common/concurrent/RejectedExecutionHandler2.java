@@ -36,16 +36,16 @@
 package com.frost.common.concurrent;
 
 /**
- * A handler for tasks that cannot be executed by a {@link ThreadPoolExecutor}.
+ * A handler for tasks that cannot be executed by a {@link ThreadPoolExecutor2}.
  *
  * @author Doug Lea
  * @since 1.5
  */
-public interface RejectedExecutionHandler {
+public interface RejectedExecutionHandler2 {
 
     /**
-     * Method that may be invoked by a {@link ThreadPoolExecutor} when
-     * {@link ThreadPoolExecutor#execute execute} cannot accept a
+     * Method that may be invoked by a {@link ThreadPoolExecutor2} when
+     * {@link ThreadPoolExecutor2#execute execute} cannot accept a
      * task.  This may occur when no more threads or queue slots are
      * available because their bounds would be exceeded, or upon
      * shutdown of the Executor.
@@ -58,5 +58,5 @@ public interface RejectedExecutionHandler {
      * @param executor the executor attempting to execute this task
      * @throws java.util.concurrent.RejectedExecutionException if there is no remedy
      */
-    void rejectedExecution(Runnable r, ThreadPoolExecutor executor);
+    void rejectedExecution(Runnable r, ThreadPoolExecutor2 executor);
 }

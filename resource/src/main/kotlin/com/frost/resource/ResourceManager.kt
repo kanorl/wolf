@@ -72,36 +72,37 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun reload(vararg classNames: String) {
-        val array = try {
-            classNames.map { Class.forName(it) as  Class<out Resource> }.toTypedArray()
+    fun reload(vararg classNames: String): Boolean {
+        return try {
+            val array = classNames.map { Class.forName(it) as  Class<out Resource> }.toTypedArray()
+            reload(*array)
+            true
         } catch(e: Exception) {
             logger.error(e.message, e)
-            throw e
+            false
         }
-        reload(*array)
     }
 
     @Synchronized
-    fun reload(vararg classes: Class<out Resource>) {
+    fun reload(vararg classes: Class<out Resource>): Boolean {
         for (clazz in classes) {
             try {
                 val reloaded = mapOf(clazz to ContainerImpl(reader.read(clazz, baseDir)))
                 validate(reloaded)
                 containers + reloaded
-                logger.info("Resource reload success: ${clazz.simpleName}")
+                logger.info("Resource reloaded: {}", clazz.simpleName)
             } catch(e: Exception) {
                 logger.error("Resource reload failed: ${clazz.simpleName}", e)
-                throw e
+                return false
             }
         }
         refresh(classes.associate { it to containers[it]!! })
-        logger.info("Resource reload complete.")
+        logger.info("Reload {} resources complete.", classes.size)
+        return true
     }
 
     override fun onApplicationEvent(event: ContextRefreshedEvent?) {
         refresh(containers)
-        eventBus.post(ResourceRefreshed)
     }
 
     @Synchronized
@@ -110,9 +111,10 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
             val delegatingContainer = injectedContainers.computeIfAbsent(it.key, { DelegatingContainer<Resource>() })
             delegatingContainer.delegatee = it.value
         }
+        eventBus.post(ResourceRefreshed(containers.keys))
     }
 
     internal fun container(clazz: Class<*>): Container<*>? = containers[clazz]
 }
 
-object ResourceRefreshed : Event
+data class ResourceRefreshed(val classes: Set<Class<out Resource>>) : Event
