@@ -1,9 +1,6 @@
 package com.frost.common.scheduling
 
-import com.frost.common.concurrent.MillisBasedScheduledThreadPoolExecutor
-import com.frost.common.concurrent.NamedTask
-import com.frost.common.concurrent.NamedThreadFactory
-import com.frost.common.concurrent.cpuNum
+import com.frost.common.concurrent.*
 import com.frost.common.logging.getLogger
 import com.frost.common.logging.loggingFormat
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,7 +19,7 @@ import java.util.concurrent.ThreadFactory
 internal class MillisBasedTaskScheduler : ThreadPoolTaskScheduler() {
     val log by getLogger()
 
-    val handler = com.frost.common.concurrent.RejectedExecutionHandler { runnable, executor ->
+    val handler = RejectedExecutionHandler2 { runnable, executor ->
         if (!executor.isShutdown) {
             log.error("Task[{}] rejected from[{}]", runnable, executor)
         }

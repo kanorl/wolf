@@ -1,23 +1,19 @@
 package com.frost.entity.db
 
-import com.frost.common.concurrent.NamedThreadFactory
+import com.frost.common.concurrent.ExecutorContext
 import com.frost.common.concurrent.lock.lock
-import com.frost.common.concurrent.shutdownAndAwaitTermination
-import com.frost.common.lang.abs
 import com.frost.common.logging.getLogger
+import com.frost.common.scheduling.Scheduler
 import com.frost.entity.EntitySetting
 import com.frost.entity.IEntity
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
-interface PersistService {
+internal interface PersistService {
 
     fun save(entity: IEntity<*>, callback: (() -> Unit)? = null)
 
@@ -32,13 +28,10 @@ internal class ImmediatePersistService : PersistService {
     @Autowired
     private lateinit var persistence: Persistence
     @Autowired
-    private lateinit var setting: EntitySetting
-    private lateinit var executors: Array<ExecutorService>
+    private lateinit var executorContext: ExecutorContext
 
     @PostConstruct
     private fun init() {
-        assert(setting.persistPoolSize > 0 && (setting.persistPoolSize and (setting.persistPoolSize - 1)) == 0, { "persist pool size must be positive and power of 2" })
-        executors = (0 until setting.persistPoolSize).map { Executors.newSingleThreadExecutor(NamedThreadFactory("persistence")) }.toTypedArray()
     }
 
     override fun save(entity: IEntity<*>, callback: (() -> Unit)?) {
@@ -54,7 +47,7 @@ internal class ImmediatePersistService : PersistService {
     }
 
     internal fun submit(task: PersistTask) {
-        executors[(task.entity.id.hashCode().abs() and (executors.size - 1))].submit(task)
+        executorContext.submitTo(task.entity.id, task)
     }
 }
 
@@ -68,24 +61,23 @@ internal class ScheduledPersistService : PersistService {
     private lateinit var delegate: ImmediatePersistService
     @Autowired
     private lateinit var setting: EntitySetting
+    @Autowired
+    private lateinit var scheduler: Scheduler
 
     private val cache = ConcurrentHashMap<Class<*>, ConcurrentHashMap<Any, PersistTask>>()
     private val lock = ReentrantReadWriteLock()
     private val r = lock.readLock()
     private val w = lock.writeLock()
-    private val scheduler = Executors.newSingleThreadScheduledExecutor(NamedThreadFactory("persist-scheduler"))
 
     @PostConstruct
     private fun init() {
-        scheduler.scheduleWithFixedDelay({ persist() }, setting.persistInterval, setting.persistInterval, TimeUnit.SECONDS)
+        scheduler.scheduleWithFixedDelay({ persist() }, setting.persistInterval * 1000)
     }
 
     @PreDestroy
     private fun onDestroy() {
-        scheduler.shutdownAndAwaitTermination()
         persist()
     }
-
 
     override fun save(entity: IEntity<*>, callback: (() -> Unit)?) {
         val map = mapFor(entity)

@@ -24,7 +24,7 @@ open class ResourceFactoryBean : FactoryBean<Validator> {
     override fun getObject(): Validator? = LocalValidatorFactoryBean()
 }
 
-class ValidateFailedException : RuntimeException {
+class ResourceInvalidException : RuntimeException {
     companion object {
         private fun errorsToString(errors: List<ObjectError>): String {
             val b = StringBuilder()
@@ -43,11 +43,6 @@ class ValidateFailedException : RuntimeException {
 class DuplicateResourceException(private val msg: String) : RuntimeException(msg) {
     constructor(clazz: Class<*>, duplicate: Collection<Int>) : this("Duplicate id$duplicate in ${clazz.simpleName}")
 }
-
-class IllegalResourceIdException private constructor(val msg: String) : RuntimeException(msg) {
-    constructor(clazz: Class<*>, illegalIds: Collection<Int>) : this("Illegal Id$illegalIds in ${clazz.simpleName}")
-}
-
 
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
