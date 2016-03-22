@@ -1,9 +1,10 @@
-package com.frost.io.netty.codec
+package com.frost.io
 
 import com.frost.common.lang.emptyByteArray
 import com.google.protobuf.MessageLite
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.stereotype.Component
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.util.concurrent.ConcurrentHashMap
 
 interface Codec<in In> {
@@ -11,8 +12,6 @@ interface Codec<in In> {
     fun <Out : In> decode(data: ByteArray, type: Class<Out>): Out
 }
 
-@Component
-@ConditionalOnMissingBean(Codec::class)
 @Suppress("UNCHECKED_CAST")
 class ProtoBufCodec : Codec<MessageLite> {
     private val defaultInstances = ConcurrentHashMap<Class<out MessageLite>, MessageLite>()
@@ -24,4 +23,12 @@ class ProtoBufCodec : Codec<MessageLite> {
     }
 
     override fun <T : MessageLite> decode(data: ByteArray, type: Class<T>): T = defaultInstance(type).newBuilderForType().mergeFrom(data).build() as T
+}
+
+@Configuration
+open class CodecConfiguration {
+
+    @Bean
+    @ConditionalOnMissingBean(Codec::class)
+    open fun codec(): Codec<*> = ProtoBufCodec()
 }

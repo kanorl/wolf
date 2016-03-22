@@ -1,7 +1,7 @@
 package com.frost.io.netty.codec
 
-import com.frost.io.netty.Command
-import com.frost.io.netty.Request
+import com.frost.io.Command
+import com.frost.io.Request
 import com.frost.io.netty.toArray
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext

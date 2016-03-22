@@ -64,7 +64,7 @@ class SocketServer : ApplicationListener<ContextStartedEvent> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    val transfer: (e: Map.Entry<String, Any>) -> Pair<ChannelOption<Any>, Any> = {
+    private val transfer: (e: Map.Entry<String, Any>) -> Pair<ChannelOption<Any>, Any> = {
         val field: Field
         try {
             field = ChannelOption::class.java.getField(it.key)

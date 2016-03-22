@@ -5,14 +5,10 @@ import com.frost.entity.db.Querier
 import com.mongodb.BasicDBObject
 import com.mongodb.DBObject
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
-import org.springframework.stereotype.Component
 
-@Component
-@ConditionalOnMissingBean(Querier::class)
 class MongoQuerier : Querier {
 
     @Autowired

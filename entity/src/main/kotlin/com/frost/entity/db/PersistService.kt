@@ -27,7 +27,7 @@ interface PersistService {
 }
 
 @Component
-class ImmediatePersistService : PersistService {
+internal class ImmediatePersistService : PersistService {
 
     @Autowired
     private lateinit var persistence: Persistence
@@ -59,7 +59,7 @@ class ImmediatePersistService : PersistService {
 }
 
 @Component
-class ScheduledPersistService : PersistService {
+internal class ScheduledPersistService : PersistService {
     private val logger by getLogger()
 
     @Autowired

@@ -20,7 +20,6 @@ class SocketSetting {
     var compressThreshold: Int = 0
     var whiteList = emptyArray<String>()
     var idleSeconds = 60
-    var codec = "un_set"
 
     override fun toString(): String {
 

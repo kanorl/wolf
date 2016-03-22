@@ -1,4 +1,4 @@
-package com.frost.io.netty
+package com.frost.io
 
 import org.springframework.stereotype.Component
 import kotlin.annotation.AnnotationRetention.RUNTIME

@@ -18,7 +18,7 @@ import javax.annotation.PostConstruct
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val clazz: Class<E>, private val persistService: PersistService) : EntityCache<ID, E> {
+internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val clazz: Class<E>, private val persistService: PersistService) : EntityCache<ID, E> {
     private val logger by getLogger()
 
     @Autowired

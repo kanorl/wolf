@@ -1,8 +1,8 @@
 package com.frost.io.netty.handler
 
 import com.frost.common.logging.getLogger
-import com.frost.io.netty.Request
-import com.frost.io.netty.Response
+import com.frost.io.Request
+import com.frost.io.Response
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler

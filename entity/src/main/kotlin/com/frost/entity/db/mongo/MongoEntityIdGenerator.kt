@@ -12,12 +12,8 @@ import com.mongodb.BasicDBObject
 import com.mongodb.DBObject
 import com.mongodb.QueryBuilder
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
-import org.springframework.stereotype.Component
 import java.util.concurrent.atomic.AtomicLong
 
-@Component
-@ConditionalOnMissingBean(EntityIdGenerator::class)
 class MongoEntityIdGenerator : EntityIdGenerator {
     @Autowired
     private lateinit var setting: EntitySetting

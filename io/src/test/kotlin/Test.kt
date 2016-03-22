@@ -21,6 +21,7 @@ fun main(args: Array<String>) {
 
     context!!.registerShutdownHook()
     context.start()
+
     while (context.isActive) {
         TimeUnit.SECONDS.sleep(10)
     }

@@ -4,8 +4,11 @@ import com.frost.common.function.invoke
 import com.frost.common.logging.getLogger
 import com.frost.common.reflect.genericTypes
 import com.frost.common.reflect.safeGet
-import com.frost.io.netty.*
-import com.frost.io.netty.codec.Codec
+import com.frost.io.*
+import com.frost.io.netty.ChannelIdParam
+import com.frost.io.netty.ChannelParam
+import com.frost.io.netty.IdentityParam
+import com.frost.io.netty.RequestParam
 import com.google.common.collect.Sets
 import io.netty.channel.Channel
 import io.netty.channel.ChannelId

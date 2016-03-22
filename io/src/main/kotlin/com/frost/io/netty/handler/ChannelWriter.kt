@@ -3,8 +3,9 @@ package com.frost.io.netty.handler
 import com.frost.common.lang.bytes
 import com.frost.common.lang.combine
 import com.frost.common.logging.getLogger
-import com.frost.io.netty.Response
-import com.frost.io.netty.codec.Codec
+import com.frost.io.Codec
+import com.frost.io.Compressor
+import com.frost.io.Response
 import com.frost.io.netty.config.SocketSetting
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.PooledByteBufAllocator
@@ -60,8 +61,4 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
         buffer.writeByte((if (compressed) 1 else 0))
         return buffer
     }
-}
-
-interface Compressor {
-    fun compress(bytes: ByteArray): ByteArray
 }

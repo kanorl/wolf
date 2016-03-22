@@ -1,4 +1,4 @@
-package com.frost.io.netty
+package com.frost.io
 
 import com.frost.common.lang.bytes
 import com.frost.common.lang.emptyByteArray

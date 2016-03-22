@@ -1,12 +1,10 @@
 package com.frost.io.netty
 
+import com.frost.io.Param
+import com.frost.io.Request
 import com.frost.io.netty.handler.identity
 import io.netty.channel.Channel
 import io.netty.channel.ChannelId
-
-interface Param<T> {
-    fun getValue(request: Request): T;
-}
 
 class ChannelIdParam : Param<ChannelId> {
     override fun getValue(request: Request): ChannelId = request.channel.id()
