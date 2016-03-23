@@ -12,8 +12,8 @@ class SocketSetting {
     var host = "127.0.0.1"
     var port = 8888
     var poolSize = Runtime.getRuntime().availableProcessors() * 2
-    var options: Map<String, Any> = hashMapOf("ALLOCATOR" to "pooled")
-    var childOptions: Map<String, Any> = hashMapOf("ALLOCATOR" to "pooled")
+    var options: Map<String, Any> = hashMapOf()
+    var childOptions: Map<String, Any> = hashMapOf()
     var frameLengthMax = 1024
     var connectionsMax = 5000
     var msgNumPerSecond: Long = 20

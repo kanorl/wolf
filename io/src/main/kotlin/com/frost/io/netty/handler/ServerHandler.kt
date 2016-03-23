@@ -12,13 +12,13 @@ import org.springframework.stereotype.Component
 
 @Component
 @ChannelHandler.Sharable
-class ServerHandler : SimpleChannelInboundHandler<Request>() {
+class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     val logger by getLogger()
 
     @Autowired
     private lateinit var manager: InvokerManager
 
-    override fun channelRead0(ctx: ChannelHandlerContext, request: Request) {
+    override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
         if (manager.identityRequired(request.command) && !ctx.channel().identified()) {
             return;
         }

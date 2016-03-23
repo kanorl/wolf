@@ -26,10 +26,10 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
     @Autowired(required = false)
     private var compressor: Compressor? = null
     @Autowired
-    private lateinit var codec: Codec<Any?>
+    private lateinit var codec: Codec
 
     override fun write(ctx: ChannelHandlerContext, msg: Any, promise: ChannelPromise) {
-        val message: Any = if (msg is Response) toByteBuf(msg) else msg
+        val message: Any = if (msg is Response<*>) toByteBuf(msg) else msg
         super.write(ctx, message, promise)
     }
 
@@ -37,18 +37,18 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
 
     fun write(identity: Long, msg: Any): ChannelFuture? = channelManager.channel(identity)?.writeAndFlush(msg)
 
-    fun writeAll(response: Response) {
+    fun writeAll(response: Response<*>) {
         writeAll(channelManager.onlinePlayerIds(), response)
     }
 
-    fun writeAll(identities: Collection<Long>, response: Response, filter: (Long) -> Boolean = { true }) {
+    fun writeAll(identities: Collection<Long>, response: Response<*>, filter: (Long) -> Boolean = { true }) {
         val byteBuf = toByteBuf(response)
         identities.filter { filter(it) }
                 .forEach { write(it, byteBuf.duplicate().retain()) }
         ReferenceCountUtil.release(byteBuf)
     }
 
-    private fun toByteBuf(response: Response): ByteBuf {
+    private fun toByteBuf(response: Response<*>): ByteBuf {
         val bytes = combine(response.command.bytes, response.code.bytes(), codec.encode(response.msg))
         val compressor = this.compressor
         val (result, compressed) = if (socketSetting.compressThreshold > 0 && bytes.size > socketSetting.compressThreshold && compressor != null) {
@@ -57,8 +57,8 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
             (bytes to false)
         }
         val buffer = PooledByteBufAllocator.DEFAULT.buffer(result.size + (if (compressed) 1 else 0))
-        buffer.writeBytes(result)
         buffer.writeByte((if (compressed) 1 else 0))
+        buffer.writeBytes(result)
         return buffer
     }
 }

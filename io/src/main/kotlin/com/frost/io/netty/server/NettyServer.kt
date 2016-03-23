@@ -23,7 +23,7 @@ import java.lang.reflect.Field
 import javax.annotation.PreDestroy
 
 @Component
-class SocketServer : ApplicationListener<ContextStartedEvent> {
+class NettyServer : ApplicationListener<ContextStartedEvent> {
     val logger by getLogger()
 
     @Autowired
@@ -54,7 +54,7 @@ class SocketServer : ApplicationListener<ContextStartedEvent> {
             socketSetting.options.map { transfer(it) }.forEach { b.option(it.first, it.second) }
             socketSetting.childOptions.map { transfer(it) }.forEach { b.childOption(it.first, it.second) }
 
-            b.bind(socketSetting.host, socketSetting.port).awaitUninterruptibly()
+            b.bind(socketSetting.host, socketSetting.port).syncUninterruptibly()
 
             logger.error("Socket server started, listening on ${socketSetting.host}:${socketSetting.port}")
         } catch(e: Exception) {

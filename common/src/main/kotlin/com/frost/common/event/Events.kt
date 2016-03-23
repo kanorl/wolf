@@ -1,6 +1,7 @@
 package com.frost.common.event
 
 import com.frost.common.Ordered
+import com.frost.common.concurrent.ExecutorContext
 import com.frost.common.reflect.genericType
 import com.frost.common.reflect.subTypes
 import com.google.common.collect.ArrayListMultimap
@@ -12,7 +13,6 @@ import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
-import java.util.concurrent.ExecutorService
 
 interface Event : Ordered
 
@@ -55,7 +55,7 @@ class EventBus {
     @Autowired
     private lateinit var listenerManager: EventListenerManager
     @Autowired
-    private lateinit var executor: ExecutorService
+    private lateinit var executor: ExecutorContext
 
     fun post(event: Event) {
         listenerManager.getListeners(event.javaClass).forEach { listener ->

@@ -1,6 +1,7 @@
 package com.frost.io.netty.server
 
 import com.frost.common.concurrent.NamedThreadFactory
+import com.frost.io.Compressor
 import com.frost.io.netty.codec.RequestDecoder
 import com.frost.io.netty.config.SocketSetting
 import com.frost.io.netty.filter.ChannelFilter
@@ -20,7 +21,7 @@ import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 
 @Component
-class SocketChannelInitializer : ChannelInitializer<SocketChannel>() {
+class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
 
     @Autowired
     private lateinit var socketSetting: SocketSetting
@@ -32,6 +33,8 @@ class SocketChannelInitializer : ChannelInitializer<SocketChannel>() {
     private lateinit var ctx: ApplicationContext
     @Autowired
     private lateinit var writer: ChannelWriter
+    @Autowired(required = false)
+    private var compressor: Compressor? = null
 
     private val prepender = LengthFieldPrepender(4)
     private lateinit var executor: EventExecutorGroup
@@ -46,7 +49,7 @@ class SocketChannelInitializer : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
         val pipeline = ch.pipeline()
         filters.forEach { pipeline.addLast(it.key, it.value) }
-        pipeline.addLast("decoder", RequestDecoder(socketSetting.frameLengthMax, 0, 4, true))
+        pipeline.addLast("decoder", RequestDecoder(socketSetting.frameLengthMax, 0, 4, true, compressor))
                 .addLast("encoder", prepender)
                 .addLast("trafficController", ChannelTrafficController(socketSetting.msgNumPerSecond))
                 .addLast("channelManager", channelManager)

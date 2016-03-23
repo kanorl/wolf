@@ -19,7 +19,7 @@ import org.springframework.util.ReflectionUtils
 import java.util.concurrent.ConcurrentHashMap
 
 class FunctionInvoker(val func: Function<Result<*>?>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
-    fun invoke(request: Request): Result<*>? {
+    fun invoke(request: Request<ByteArray>): Result<*>? {
         return func.invoke(params.map { it.getValue(request) }.toTypedArray())
     }
 }
@@ -32,6 +32,7 @@ final class Result<T>(val code: Int, val value: T? = null) {
 }
 
 fun error(code: Int): Result<Unit> = Result(code)
+inline fun <reified T> success(value: T? = null): Result<T> = Result<T>(0, value)
 
 @Suppress("UNCHECKED_CAST")
 @Component
@@ -39,7 +40,7 @@ class InvokerManager : BeanPostProcessor {
     val logger by getLogger()
 
     @Autowired
-    private lateinit var codec: Codec<Any>
+    private lateinit var codec: Codec
 
     private val invokers = ConcurrentHashMap<Command, FunctionInvoker>()
     private val identityNotRequiredCommands = Sets.newConcurrentHashSet<Command>()
@@ -70,7 +71,7 @@ class InvokerManager : BeanPostProcessor {
                     }.toTypedArray()
                     val command = Command(module, cmd)
                     val prev = invokers.put(command, FunctionInvoker(func, params, typeArgs.last() == javaClass))
-                    prev ?: throw IllegalStateException("Duplicate function $command")
+                    prev?.let { throw IllegalStateException("Duplicate function $command") }
                     if (it.isAnnotationPresent(IdentityRequired::class.java) && !it.getAnnotation(IdentityRequired::class.java).value) {
                         identityNotRequiredCommands.add(command)
                     } else if (!it.isAnnotationPresent(IdentityRequired::class.java) && identityNotRequired) {

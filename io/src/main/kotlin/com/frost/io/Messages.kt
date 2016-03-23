@@ -1,7 +1,6 @@
 package com.frost.io
 
 import com.frost.common.lang.bytes
-import com.frost.common.lang.emptyByteArray
 import com.frost.common.lang.toShort
 import io.netty.channel.Channel
 import java.util.*
@@ -33,6 +32,6 @@ final class Command {
     }
 }
 
-class Request(val command: Command, val body: ByteArray = emptyByteArray, val channel: Channel)
+data class Request<T>(val command: Command, val body: T?, val channel: Channel)
 
-class Response(val command: Command, val msg: Any? = null, val code: Int)
+data class Response<T>(val command: Command, val msg: T? = null, val code: Int)
