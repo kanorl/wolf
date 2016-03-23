@@ -38,7 +38,7 @@ class NettyClient {
     }
 
     fun write(cmd: Command, msg: Any? = null) {
-        channel.writeAndFlush(Request(cmd, msg, channel))
+        channel.writeAndFlush(Request(cmd, msg))
     }
 
     fun schedule(interval: Long, task: () -> Unit) {

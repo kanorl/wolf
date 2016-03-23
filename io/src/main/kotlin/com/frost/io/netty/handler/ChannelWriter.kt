@@ -1,12 +1,12 @@
 package com.frost.io.netty.handler
 
-import com.frost.common.lang.bytes
-import com.frost.common.lang.combine
+import com.frost.common.lang.toByteArray
 import com.frost.common.logging.getLogger
 import com.frost.io.Codec
 import com.frost.io.Compressor
 import com.frost.io.Response
 import com.frost.io.netty.config.SocketSetting
+import com.google.common.primitives.Bytes
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.PooledByteBufAllocator
 import io.netty.channel.*
@@ -49,7 +49,7 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
     }
 
     private fun toByteBuf(response: Response<*>): ByteBuf {
-        val bytes = combine(response.command.bytes, response.code.bytes(), codec.encode(response.msg))
+        val bytes = Bytes.concat(response.command.bytes(), response.code.toByteArray(), codec.encode(response.msg))
         val compressor = this.compressor
         val (result, compressed) = if (socketSetting.compressThreshold > 0 && bytes.size > socketSetting.compressThreshold && compressor != null) {
             (compressor.compress(bytes) to true)

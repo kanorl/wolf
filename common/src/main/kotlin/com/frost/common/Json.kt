@@ -38,7 +38,7 @@ fun <T : Any> T.toJson(): String = jacksonObjectMapper.writeValueAsString(this)
 /**
  * serialize T as ByteArray
  */
-fun <T : Any> T.toBytes(): ByteArray = jacksonObjectMapper.writeValueAsBytes(this)
+fun <T : Any> T.toJsonBytes(): ByteArray = jacksonObjectMapper.writeValueAsBytes(this)
 
 /**
  * deserialize Json String as T

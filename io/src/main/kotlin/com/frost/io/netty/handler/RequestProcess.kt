@@ -19,8 +19,8 @@ import org.springframework.util.ReflectionUtils
 import java.util.concurrent.ConcurrentHashMap
 
 class FunctionInvoker(val func: Function<Result<*>?>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
-    fun invoke(request: Request<ByteArray>): Result<*>? {
-        return func.invoke(params.map { it.getValue(request) }.toTypedArray())
+    fun invoke(request: Request<*>, channel: Channel): Result<*>? {
+        return func.invoke(params.map { it.getValue(request, channel) }.toTypedArray())
     }
 }
 

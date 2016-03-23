@@ -30,7 +30,7 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
 
         var result: Result<*>? = null
         try {
-            result = invoker.invoke(request)
+            result = invoker.invoke(request, ctx.channel())
         } catch(e: Exception) {
             logger.error("Request[cmd=${request.command}, identity=${ctx.channel().identity()}] process failed", e)
         }

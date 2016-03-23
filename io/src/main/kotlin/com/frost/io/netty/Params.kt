@@ -8,17 +8,17 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelId
 
 class ChannelIdParam : Param<ChannelId> {
-    override fun getValue(request: Request<*>): ChannelId = request.channel.id()
+    override fun getValue(request: Request<*>, channel: Channel): ChannelId = channel.id()
 }
 
 class ChannelParam : Param<Channel> {
-    override fun getValue(request: Request<*>): Channel = request.channel
+    override fun getValue(request: Request<*>, channel: Channel): Channel = channel
 }
 
 class IdentityParam : Param<Long> {
-    override fun getValue(request: Request<*>): Long = request.channel.identity() ?: -1
+    override fun getValue(request: Request<*>, channel: Channel): Long = channel.identity() ?: -1
 }
 
 class RequestParam<T>(val type: Class<T>, val decoder: (ByteArray, Class<T>) -> T) : Param<T> {
-    override fun getValue(request: Request<*>): T = decoder(request.body as? ByteArray ?: emptyByteArray, type)
+    override fun getValue(request: Request<*>, channel: Channel): T = decoder(request.body as? ByteArray ?: emptyByteArray, type)
 }

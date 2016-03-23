@@ -31,7 +31,7 @@ class RequestDecoder(
 
         val module = data.readShort()
         val cmd = data.readByte()
-        return Request(Command(module, cmd), data.toArray(), ctx.channel())
+        return Request(Command(module, cmd), data.toArray())
     }
 
     override fun extractFrame(ctx: ChannelHandlerContext?, buffer: ByteBuf?, index: Int, length: Int): ByteBuf? {
