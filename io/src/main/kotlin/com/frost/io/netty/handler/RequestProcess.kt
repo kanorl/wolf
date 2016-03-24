@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
 import java.util.concurrent.ConcurrentHashMap
 
-class FunctionInvoker(val func: Function<Result<*>?>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
-    fun invoke(request: Request<*>, channel: Channel): Result<*>? {
+class FunctionInvoker(val func: Function<*>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
+    fun invoke(request: Request<*>, channel: Channel): Any? {
         return func.invoke(params.map { it.getValue(request, channel) }.toTypedArray())
     }
 }
@@ -32,7 +32,7 @@ final class Result<T>(val code: Int, val value: T? = null) {
 }
 
 fun error(code: Int): Result<Unit> = Result(code)
-inline fun <reified T> success(value: T? = null): Result<T> = Result<T>(0, value)
+inline fun <reified T> success(value: T? = null): Result<T> = Result(0, value)
 
 @Suppress("UNCHECKED_CAST")
 @Component

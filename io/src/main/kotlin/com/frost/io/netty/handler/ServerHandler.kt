@@ -28,13 +28,16 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
             return
         }
 
-        var result: Result<*>? = null
+        var result: Any? = null
         try {
             result = invoker.invoke(request, ctx.channel())
         } catch(e: Exception) {
             logger.error("Request[cmd=${request.command}, identity=${ctx.channel().identity()}] process failed", e)
         }
         if (invoker.responseOmit) {
+            return
+        }
+        if (result !is Result<*>?) {
             return
         }
 
@@ -44,4 +47,8 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
         if (evt is IdleStateEvent) ctx.close()
     }
+}
+
+fun main(args: Array<String>) {
+    println(null is Int)
 }
