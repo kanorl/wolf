@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component
 import kotlin.annotation.AnnotationRetention.RUNTIME
 import kotlin.annotation.AnnotationTarget.CLASS
 import kotlin.annotation.AnnotationTarget.FIELD
+import kotlin.reflect.KClass
 
 @Retention(RUNTIME)
 @Target(CLASS)
@@ -16,4 +17,5 @@ annotation class Cmd(val value: Byte)
 
 @Retention(RUNTIME)
 @Target(FIELD, CLASS)
-annotation class IdentityRequired(val value: Boolean)
+@Repeatable
+annotation class IdentityRequired(val value: KClass<out Identity>)

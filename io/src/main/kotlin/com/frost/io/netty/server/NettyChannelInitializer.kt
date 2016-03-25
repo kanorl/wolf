@@ -5,6 +5,7 @@ import com.frost.io.Compressor
 import com.frost.io.netty.codec.RequestDecoder
 import com.frost.io.netty.config.SocketSetting
 import com.frost.io.netty.filter.ChannelFilter
+import com.frost.io.netty.filter.RequestInterceptor
 import com.frost.io.netty.handler.ChannelManager
 import com.frost.io.netty.handler.ChannelTrafficController
 import com.frost.io.netty.handler.ChannelWriter
@@ -38,23 +39,27 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
 
     private val prepender = LengthFieldPrepender(4)
     private lateinit var executor: EventExecutorGroup
-    private lateinit var filters: MutableMap<String, ChannelFilter>
+    private lateinit var filters: Map<String, ChannelFilter>
+    private lateinit var interceptors: Map<String, RequestInterceptor>
+
 
     @PostConstruct
     private fun init() {
         executor = DefaultEventExecutorGroup(socketSetting.poolSize, NamedThreadFactory("io-handler"))
         filters = ctx.getBeansOfType(ChannelFilter::class.java)
+        interceptors = ctx.getBeansOfType(RequestInterceptor::class.java)
     }
 
     override fun initChannel(ch: SocketChannel) {
         val pipeline = ch.pipeline()
         filters.forEach { pipeline.addLast(it.key, it.value) }
         pipeline.addLast("decoder", RequestDecoder(socketSetting.frameLengthMax, 0, 4, true, compressor))
-                .addLast("encoder", prepender)
+                .addLast("lengthPrepender", prepender)
                 .addLast("trafficController", ChannelTrafficController(socketSetting.msgNumPerSecond))
                 .addLast("channelManager", channelManager)
                 .addLast("writer", writer)
                 .addLast("idleMonitor", IdleStateHandler(0, 0, socketSetting.idleSeconds))
-                .addLast(executor, "handler", handler)
+        interceptors.forEach { pipeline.addLast(it.key, it.value) }
+        pipeline.addLast(executor, "handler", handler)
     }
 }

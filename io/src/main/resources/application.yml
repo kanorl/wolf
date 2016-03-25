@@ -1,5 +1,5 @@
 io-netty:
-  port: 8888
+  port: 5555
 #  poolSize: 8
   options:
   childOptions:

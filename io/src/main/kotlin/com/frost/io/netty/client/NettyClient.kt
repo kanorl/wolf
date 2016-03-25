@@ -71,12 +71,13 @@ class NettyClient {
     }
 
     fun schedule(interval: Long, task: () -> Unit) {
+        connect()
         channel?.eventLoop()?.scheduleWithFixedDelay(task, 0, interval, TimeUnit.MILLISECONDS)
     }
 }
 
 fun main(args: Array<String>) {
-    val client = NettyClient(port = 8888)
+    val client = NettyClient(port = 5555)
     client.schedule(2000) {
         client.write(Command(1, 1), "ping")
     }

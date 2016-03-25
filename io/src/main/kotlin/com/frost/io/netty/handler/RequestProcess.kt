@@ -5,18 +5,13 @@ import com.frost.common.logging.getLogger
 import com.frost.common.reflect.genericTypes
 import com.frost.common.reflect.safeGet
 import com.frost.io.*
-import com.frost.io.netty.ChannelIdParam
-import com.frost.io.netty.ChannelParam
-import com.frost.io.netty.IdentityParam
-import com.frost.io.netty.RequestParam
-import com.google.common.collect.Sets
+import com.frost.io.netty.*
 import io.netty.channel.Channel
 import io.netty.channel.ChannelId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
-import java.util.concurrent.ConcurrentHashMap
 
 class FunctionInvoker(val func: Function<*>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
     fun invoke(request: Request<*>, channel: Channel): Any? {
@@ -42,8 +37,8 @@ class InvokerManager : BeanPostProcessor {
     @Autowired
     private lateinit var codec: Codec
 
-    private val invokers = ConcurrentHashMap<Command, FunctionInvoker>()
-    private val identityNotRequiredCommands = Sets.newConcurrentHashSet<Command>()
+    private val invokers = hashMapOf<Command, FunctionInvoker>()
+    private val commandGroup = mul<Class<out Identity>, Command>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
         return bean;
@@ -53,8 +48,7 @@ class InvokerManager : BeanPostProcessor {
         val type = bean.javaClass
         val annotation = type.getAnnotation(Module::class.java) ?: return bean
         val module = annotation.value;
-        val identityRequired = type.getAnnotation(IdentityRequired::class.java)
-        val identityNotRequired = identityRequired != null && !identityRequired.value
+        val classAnnotations = type.getDeclaredAnnotationsByType(IdentityRequired::class.java).map { it.value }.let { if (it.isEmpty()) listOf(Identity.Companion.Player::class) else it }
         ReflectionUtils.doWithFields(type,
                 {
                     val cmd = it.getAnnotation(Cmd::class.java)!!.value
@@ -72,10 +66,12 @@ class InvokerManager : BeanPostProcessor {
                     val command = Command(module, cmd)
                     val prev = invokers.put(command, FunctionInvoker(func, params, typeArgs.last() == javaClass))
                     prev?.let { throw IllegalStateException("Duplicate function $command") }
-                    if (it.isAnnotationPresent(IdentityRequired::class.java) && !it.getAnnotation(IdentityRequired::class.java).value) {
-                        identityNotRequiredCommands.add(command)
-                    } else if (!it.isAnnotationPresent(IdentityRequired::class.java) && identityNotRequired) {
-                        identityNotRequiredCommands.add(command)
+                    val fieldAnnotatins = it.getAnnotationsByType(IdentityRequired::class.java)
+
+                    if (it.isAnnotationPresent(IdentityRequired::class.java)) {
+                        commandGroup + (command to it.getAnnotation(IdentityRequired::class.java).value)
+                    } else {
+                        commandGroup + (command to identityType)
                     }
                 },
                 { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
@@ -83,6 +79,7 @@ class InvokerManager : BeanPostProcessor {
         return bean;
     }
 
+    @Synchronized
     fun replace(command: Command, invoker: FunctionInvoker) {
         invokers.put(command, invoker)
         logger.error("Invoker[{}] replaced", command)
@@ -90,5 +87,5 @@ class InvokerManager : BeanPostProcessor {
 
     fun invoker(command: Command): FunctionInvoker? = invokers[command];
 
-    fun identityRequired(command: Command): Boolean = !identityNotRequiredCommands.contains(command)
+    fun checkAuth(command: Command, identity: Identity?): Boolean = identity != null && commandGroup[command]?.javaClass === identity.javaClass
 }

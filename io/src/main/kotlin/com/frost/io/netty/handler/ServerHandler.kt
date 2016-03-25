@@ -19,7 +19,8 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     private lateinit var manager: InvokerManager
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
-        if (manager.identityRequired(request.command) && !ctx.channel().identified()) {
+        val identity = ctx.channel().identity()
+        if (manager.checkAuth(request.command, identity)) {
             return;
         }
         val invoker = manager.invoker(request.command)

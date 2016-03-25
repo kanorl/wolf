@@ -3,6 +3,7 @@ package com.frost.io.netty.handler
 import com.frost.common.event.Event
 import com.frost.common.event.EventBus
 import com.frost.common.logging.getLogger
+import com.frost.io.Identity
 import io.netty.channel.*
 import io.netty.util.AttributeKey
 import io.netty.util.concurrent.GlobalEventExecutor
@@ -18,75 +19,82 @@ import javax.annotation.PreDestroy
 class ChannelManager : ChannelDuplexHandler() {
     val logger by getLogger() // TODO session log
 
-    val keepAlive = 30L
+    val keepAliveMillis = 30000L
 
     @Autowired
     private lateinit var eventBus: EventBus
 
-    private val anonymousChannels = ConcurrentHashMap<ChannelId, Channel>()
-    private val identifiedChannels = ConcurrentHashMap<Long, Channel>()
+    private val channelGroup = ConcurrentHashMap<ChannelId, Channel>()
+    private val identifiedChannelGroups = ConcurrentHashMap<Class<out Identity>, ConcurrentHashMap<Identity, Channel>>()
+    private val remover = ChannelFutureListener { channelClosed(it.channel()) }
+    private val createTimeKey = AttributeKey.valueOf<Long>("createTime")
 
-    val cleanUpTask = GlobalEventExecutor.INSTANCE.scheduleWithFixedDelay({ }, keepAlive, keepAlive, TimeUnit.SECONDS)
+    val cleanUpTask = GlobalEventExecutor.INSTANCE.scheduleWithFixedDelay({
+        val now = System.currentTimeMillis()
+        channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > keepAliveMillis }.forEach {
+            it.close()
+            logger.info("Close channel due to identify timeout: {}", it)
+        }
+    }, keepAliveMillis, keepAliveMillis, TimeUnit.MILLISECONDS)
 
     @PreDestroy
     private fun onDestroy() {
         cleanUpTask.cancel(true)
     }
 
+    private fun channelClosed(channel: Channel) {
+        channelGroup.remove(channel.id(), channel)
+        val identity = channel.attr(identityKey).get()
+        identity?.let {
+            identifiedChannelGroups.remove(it, channel)
+            eventBus.post(ChannelClosedEvent(it))
+        }
+        channel.closeFuture().removeListener(remover)
+    }
+
     override fun channelActive(ctx: ChannelHandlerContext) {
         val channel = ctx.channel()
-        if (anonymousChannels.putIfAbsent(channel.id(), channel) != null) {
+        channel.attr(createTimeKey).setIfAbsent(System.currentTimeMillis())
+        if (channelGroup.putIfAbsent(channel.id(), channel) != null) {
             logger.error("Duplicate Channel Id: {}", ctx.channel().id())
             ctx.close()
-        } else {
-            super.channelActive(ctx)
-        }
-    }
-
-    override fun channelInactive(ctx: ChannelHandlerContext) {
-        val channel = ctx.channel()
-        anonymousChannels.remove(channel.id())
-        val identity = channel.identity()
-        identity?.let { identifiedChannels.remove(it)?.let { eventBus.post(ChannelClosedEvent(identity)) } }
-        super.channelInactive(ctx)
-    }
-
-    fun identify(channelId: ChannelId, identity: Long) {
-        val channel = anonymousChannels[channelId] ?: return
-        val prev = identifiedChannels.replace(identity, channel)
-        prev?.removeIdentity()
-        prev?.close()
-        // check after add
-        if (!channel.isOpen || anonymousChannels[channelId] != channel) {
-            identifiedChannels.remove(identity, channel)
             return
         }
+        channel.closeFuture().addListener(remover)
+        super.channelActive(ctx)
+    }
+
+    fun bind(channelId: ChannelId, identity: Identity) {
+        val channel = channelGroup[channelId] ?: return
+        channel.identity(identity)
+
+        val group = identifiedChannelGroups.computeIfAbsent(identity.javaClass, { ConcurrentHashMap<Identity, Channel>() })
+        val prev = group.putIfAbsent(identity, channel)
+        prev?.close()
         eventBus.post(ChannelBindEvent(identity, prev != null))
     }
 
-    fun channel(channelId: ChannelId): Channel? = anonymousChannels[channelId]
-
-    fun channel(id: Long): Channel? = identifiedChannels[id]
-
-    fun onlinePlayerIds() = Collections.unmodifiableSet(identifiedChannels.keys)
+    fun channel(channelId: ChannelId): Channel? = channelGroup[channelId]
+    fun channels(): Collection<Channel> = Collections.unmodifiableCollection(channelGroup.values)
+    fun channel(identity: Identity): Channel? = identifiedChannelGroups[identity.javaClass]?.get(identity)
+    fun channels(type: Class<out Identity>): Collection<Channel> = Collections.unmodifiableCollection(identifiedChannelGroups[type]?.values ?: emptyList())
 }
 
-val identityKey = AttributeKey.valueOf<Long>("identity")
-fun Channel.identity(): Long? {
+val identityKey = AttributeKey.valueOf<Identity>("identity")
+fun Channel.identity(): Identity? {
     return this.attr(identityKey).get()
 }
 
-fun Channel.removeIdentity() {
+private fun Channel.removeIdentity() {
     return this.attr(identityKey).remove()
 }
 
-fun Channel.identity(identity: Long) {
+private fun Channel.identity(identity: Identity) {
     this.attr(identityKey).setIfAbsent(identity) ?: throw IllegalStateException("identity[$identity] is already set.")
 }
 
-fun Channel.identified(): Boolean {
-    return this.identity() != null
-}
+fun Channel.identified(): Boolean = this.identity() != null
 
-data class ChannelClosedEvent(val identity: Long) : Event
-data class ChannelBindEvent(val identity: Long, val rebind: Boolean) : Event
+data class ChannelClosedEvent(val identity: Identity) : Event
+data class ChannelBindEvent(val identity: Identity, val rebind: Boolean) : Event
+
