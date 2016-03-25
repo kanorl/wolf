@@ -38,7 +38,7 @@ class InvokerManager : BeanPostProcessor {
     private lateinit var codec: Codec
 
     private val invokers = hashMapOf<Command, FunctionInvoker>()
-    private val commandGroup = mul<Class<out Identity>, Command>()
+    private var commandGroup = mapOf<Command, List<Class<out Identity>>>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
         return bean;
@@ -48,7 +48,7 @@ class InvokerManager : BeanPostProcessor {
         val type = bean.javaClass
         val annotation = type.getAnnotation(Module::class.java) ?: return bean
         val module = annotation.value;
-        val classAnnotations = type.getDeclaredAnnotationsByType(IdentityRequired::class.java).map { it.value }.let { if (it.isEmpty()) listOf(Identity.Companion.Player::class) else it }
+        val classIdentities = type.getAnnotation(Identities::class.java)?.value ?: emptyArray()
         ReflectionUtils.doWithFields(type,
                 {
                     val cmd = it.getAnnotation(Cmd::class.java)!!.value
@@ -66,12 +66,13 @@ class InvokerManager : BeanPostProcessor {
                     val command = Command(module, cmd)
                     val prev = invokers.put(command, FunctionInvoker(func, params, typeArgs.last() == javaClass))
                     prev?.let { throw IllegalStateException("Duplicate function $command") }
-                    val fieldAnnotatins = it.getAnnotationsByType(IdentityRequired::class.java)
-
-                    if (it.isAnnotationPresent(IdentityRequired::class.java)) {
-                        commandGroup + (command to it.getAnnotation(IdentityRequired::class.java).value)
+                    val fieldIdentities = it.getAnnotation(Identities::class.java)?.value ?: emptyArray()
+                    if (fieldIdentities.isNotEmpty()) {
+                        commandGroup += (command to fieldIdentities.map { it.java } )
+                    } else if (classIdentities.isNotEmpty()) {
+                        commandGroup += (command to classIdentities.map { it.java })
                     } else {
-                        commandGroup + (command to identityType)
+                        commandGroup += (command to listOf(Identity.Companion.Player::class.java))
                     }
                 },
                 { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
@@ -87,5 +88,5 @@ class InvokerManager : BeanPostProcessor {
 
     fun invoker(command: Command): FunctionInvoker? = invokers[command];
 
-    fun checkAuth(command: Command, identity: Identity?): Boolean = identity != null && commandGroup[command]?.javaClass === identity.javaClass
+    fun checkAuth(command: Command, identity: Identity?): Boolean = identity != null && commandGroup[command]?.any { it.isAssignableFrom(identity.javaClass) } ?: false
 }

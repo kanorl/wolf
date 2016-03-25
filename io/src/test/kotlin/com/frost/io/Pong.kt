@@ -5,7 +5,7 @@ import com.frost.io.netty.handler.Result
 import com.frost.io.netty.handler.success
 
 @Module(1)
-@IdentityRequired(false)
+@Identities(arrayOf(Identity::class))
 class Pong {
     val logger by getLogger()
 

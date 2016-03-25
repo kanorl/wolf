@@ -17,5 +17,4 @@ annotation class Cmd(val value: Byte)
 
 @Retention(RUNTIME)
 @Target(FIELD, CLASS)
-@Repeatable
-annotation class IdentityRequired(val value: KClass<out Identity>)
+annotation class Identities(val value: Array<KClass<out Identity>>)

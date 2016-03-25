@@ -20,7 +20,8 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
         val identity = ctx.channel().identity()
-        if (manager.checkAuth(request.command, identity)) {
+        if (!manager.checkAuth(request.command, identity)) {
+            logger.info("Channel[{}] no privilege to access [{}]", identity, request.command)
             return;
         }
         val invoker = manager.invoker(request.command)
