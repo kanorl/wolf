@@ -90,7 +90,7 @@ private fun Channel.removeIdentity() {
 }
 
 private fun Channel.identity(identity: Identity) {
-    this.attr(identityKey).setIfAbsent(identity) ?: throw IllegalStateException("identity[$identity] is already set.")
+    this.attr(identityKey).setIfAbsent(identity)?.let { throw IllegalStateException("identity[$identity] is already set.") }
 }
 
 fun Channel.identified(): Boolean = this.identity() != null

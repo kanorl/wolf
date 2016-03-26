@@ -20,10 +20,6 @@ class SocketSetting {
     val idleSeconds = 60
 
     override fun toString(): String {
-
-        val builder = StringBuilder()
-        builder.append("Socket Settings: \r\n")
-        this.javaClass.declaredFields.forEach { f -> builder.append("\t").append(f.name).append(": ").append(f.get(this)).append("\n") }
         return settingToString(this, "Socket Setting")
     }
 }

@@ -17,13 +17,13 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationListener
+import org.springframework.context.Lifecycle
 import org.springframework.context.event.ContextStartedEvent
 import org.springframework.stereotype.Component
 import java.lang.reflect.Field
-import javax.annotation.PreDestroy
 
 @Component
-class NettyServer : ApplicationListener<ContextStartedEvent> {
+class NettyServer : ApplicationListener<ContextStartedEvent>, Lifecycle {
     val logger by getLogger()
 
     @Autowired
@@ -37,10 +37,10 @@ class NettyServer : ApplicationListener<ContextStartedEvent> {
     private fun eventLoopGroup(nThread: Int = 0, factory: NamedThreadFactory): EventLoopGroup = if (Epoll.isAvailable()) EpollEventLoopGroup(nThread, factory) else NioEventLoopGroup(nThread, factory)
 
     override fun onApplicationEvent(event: ContextStartedEvent?) {
-        start()
+        start0()
     }
 
-    private fun start() {
+    private fun start0() {
         logger.info("Socket server is starting.\n $socketSetting")
         try {
             val b = ServerBootstrap()
@@ -63,6 +63,9 @@ class NettyServer : ApplicationListener<ContextStartedEvent> {
         }
     }
 
+    override fun start() {
+    }
+
     @Suppress("UNCHECKED_CAST")
     private val transfer: (e: Map.Entry<String, Any>) -> Pair<ChannelOption<Any>, Any> = {
         val field: Field
@@ -72,18 +75,12 @@ class NettyServer : ApplicationListener<ContextStartedEvent> {
             throw IllegalArgumentException("Unsupported socket option [${it.key}]")
         }
         val key = field.get(null) as ChannelOption<Any>
-        // TODO enable config
-        val value = it.value
-        //        val typeArg = field.typeArg();
-        //        val value: Any = when (typeArg) {
-        //            ByteBufAllocator::class.java -> if ("unpooled".equals(e.value.toString(), true)) UnpooledByteBufAllocator.DEFAULT else PooledByteBufAllocator.DEFAULT
-        //            else -> e.value
-        //        }
-        Pair(key, value)
+        Pair(key, it.value)
     }
 
-    @PreDestroy
-    private fun shutdown() {
+    override fun isRunning(): Boolean = !(parentGroup.isShutdown && childGroup.isShutdown)
+
+    override fun stop() {
         parentGroup.shutdownGracefully().sync()
         childGroup.shutdownGracefully().sync()
         logger.error("Socket server closed.....")

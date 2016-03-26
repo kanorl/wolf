@@ -4,10 +4,10 @@ import com.frost.common.Order
 import com.frost.common.Ordered
 import com.frost.common.lang.insurePowerOf2
 import com.frost.common.logging.getLogger
+import com.google.common.util.concurrent.MoreExecutors
 import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.atomic.AtomicInteger
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
@@ -46,18 +46,8 @@ class ExecutorContext {
 
     @PreDestroy
     fun shutdown() {
-        val tasks = executors.flatMap { it.shutdownAndAwaitTermination() }
-        logger.error("{} tasks not executed.", tasks.size)
+        executors.forEach { it.shutdownAndAwaitTermination() }
     }
 }
 
-fun ExecutorService.shutdownAndAwaitTermination(timeout: Long = 30, timeUnit: TimeUnit = TimeUnit.SECONDS): List<Runnable> {
-    shutdown()
-    return if (awaitTermination(timeout, timeUnit)) {
-        emptyList()
-    } else {
-        val canceledTasks = shutdownNow()
-        awaitTermination(timeout, timeUnit)
-        canceledTasks
-    }
-}
+fun ExecutorService.shutdownAndAwaitTermination(timeout: Long = 30, timeUnit: TimeUnit = TimeUnit.SECONDS): Boolean = MoreExecutors.shutdownAndAwaitTermination(this, timeout, timeUnit)

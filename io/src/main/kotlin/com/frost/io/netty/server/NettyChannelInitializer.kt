@@ -1,6 +1,7 @@
 package com.frost.io.netty.server
 
 import com.frost.common.concurrent.NamedThreadFactory
+import com.frost.common.logging.getLogger
 import com.frost.io.Compressor
 import com.frost.io.netty.codec.RequestDecoder
 import com.frost.io.netty.config.SocketSetting
@@ -20,9 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
+import javax.annotation.PreDestroy
 
 @Component
 class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
+    private val logger by getLogger()
 
     @Autowired
     private lateinit var socketSetting: SocketSetting
@@ -61,5 +64,10 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
                 .addLast("idleMonitor", IdleStateHandler(0, 0, socketSetting.idleSeconds))
         interceptors.forEach { pipeline.addLast(it.key, it.value) }
         pipeline.addLast(executor, "handler", handler)
+    }
+
+    @PreDestroy
+    private fun onDestroy() {
+        executor.shutdownGracefully().sync()
     }
 }

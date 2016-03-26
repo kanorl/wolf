@@ -26,7 +26,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     private lateinit var reader: Reader
     @Autowired
     private lateinit var validator: Validator
-    @Value("\${resource.path}")
+    @Value("\${resource.path:\"\"}")
     private lateinit var baseDir: String
 
 

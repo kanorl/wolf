@@ -19,11 +19,14 @@ class FunctionInvoker(val func: Function<*>, val params: Array<Param<out Any>>, 
     }
 }
 
-final class Result<T>(val code: Int, val value: T? = null) {
-    val success = code == 0
-    val failure = !success
+data class Result<T>(val code: Int, val value: T? = null) {
+    val success: Boolean
+        get() = code == 0
+    val failure: Boolean
+        get() = !success
+
     inline fun onSuccess(op: () -> Unit) = if (success) op() else Unit
-    inline fun onFail(op: () -> Unit) = if (failure) op() else Unit
+    inline fun onFailure(op: () -> Unit) = if (failure) op() else Unit
 }
 
 fun error(code: Int): Result<Unit> = Result(code)

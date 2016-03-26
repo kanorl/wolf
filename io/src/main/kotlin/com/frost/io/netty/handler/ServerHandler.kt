@@ -21,7 +21,7 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
         val identity = ctx.channel().identity()
         if (!manager.checkAuth(request.command, identity)) {
-            logger.info("Channel[{}] no privilege to access [{}]", identity, request.command)
+            logger.debug("Access denied: {} from {} access {}", identity, ctx.channel(), request.command)
             return;
         }
         val invoker = manager.invoker(request.command)
@@ -49,8 +49,4 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
         if (evt is IdleStateEvent) ctx.close()
     }
-}
-
-fun main(args: Array<String>) {
-    println(null is Int)
 }

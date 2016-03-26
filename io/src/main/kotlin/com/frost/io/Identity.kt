@@ -8,10 +8,9 @@ interface Identity {
     companion object {
         data class Player(override val value: Long) : Identity
 
-        data class GM(override val value: Long) : Identity {
+        data class GM(override val value: Long = GM.generator.incrementAndGet()) : Identity {
             companion object {
                 private val generator = AtomicLong()
-                fun create(): GM = GM(generator.incrementAndGet())
             }
         }
     }
