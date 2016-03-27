@@ -6,7 +6,6 @@ import com.frost.io.Response
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import io.netty.handler.timeout.IdleStateEvent
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 
@@ -19,7 +18,7 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     private lateinit var manager: InvokerManager
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
-        val identity = ctx.channel().identity()
+        val identity = ctx.identity()
         if (!manager.checkAuth(request.command, identity)) {
             logger.debug("Access denied: {} from {} access {}", identity, ctx.channel(), request.command)
             return;
@@ -44,9 +43,5 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
         }
 
         ctx.writeAndFlush(Response(request.command, result?.value, result?.code ?: -1))
-    }
-
-    override fun userEventTriggered(ctx: ChannelHandlerContext, evt: Any) {
-        if (evt is IdleStateEvent) ctx.close()
     }
 }

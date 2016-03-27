@@ -7,14 +7,14 @@ import com.frost.io.netty.codec.RequestDecoder
 import com.frost.io.netty.config.SocketSetting
 import com.frost.io.netty.filter.ChannelFilter
 import com.frost.io.netty.filter.RequestInterceptor
+import com.frost.io.netty.handler.ChannelInboundTrafficController
 import com.frost.io.netty.handler.ChannelManager
-import com.frost.io.netty.handler.ChannelTrafficController
 import com.frost.io.netty.handler.ChannelWriter
 import com.frost.io.netty.handler.ServerHandler
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.LengthFieldPrepender
-import io.netty.handler.timeout.IdleStateHandler
+import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.util.concurrent.DefaultEventExecutorGroup
 import io.netty.util.concurrent.EventExecutorGroup
 import org.springframework.beans.factory.annotation.Autowired
@@ -42,27 +42,27 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
 
     private val prepender = LengthFieldPrepender(4)
     private lateinit var executor: EventExecutorGroup
-    private lateinit var filters: Map<String, ChannelFilter>
-    private lateinit var interceptors: Map<String, RequestInterceptor>
+    private lateinit var filters: List<ChannelFilter>
+    private lateinit var interceptors: List<RequestInterceptor>
 
 
     @PostConstruct
     private fun init() {
         executor = DefaultEventExecutorGroup(socketSetting.poolSize, NamedThreadFactory("io-handler"))
-        filters = ctx.getBeansOfType(ChannelFilter::class.java)
-        interceptors = ctx.getBeansOfType(RequestInterceptor::class.java)
+        filters = ctx.getBeansOfType(ChannelFilter::class.java).values.sorted()
+        interceptors = ctx.getBeansOfType(RequestInterceptor::class.java).values.sorted()
     }
 
     override fun initChannel(ch: SocketChannel) {
         val pipeline = ch.pipeline()
-        filters.forEach { pipeline.addLast(it.key, it.value) }
+        filters.forEach { pipeline.addLast(it) }
         pipeline.addLast("decoder", RequestDecoder(socketSetting.frameLengthMax, 0, 4, true, compressor))
                 .addLast("lengthPrepender", prepender)
-                .addLast("trafficController", ChannelTrafficController(socketSetting.msgNumPerSecond))
+                .addLast("trafficController", ChannelInboundTrafficController(socketSetting.msgNumPerSecond))
                 .addLast("channelManager", channelManager)
                 .addLast("writer", writer)
-                .addLast("idleMonitor", IdleStateHandler(0, 0, socketSetting.idleSeconds))
-        interceptors.forEach { pipeline.addLast(it.key, it.value) }
+                .addLast("readTimeoutHandler", ReadTimeoutHandler(socketSetting.readTimeoutSeconds))
+        interceptors.forEach { pipeline.addLast(it) }
         pipeline.addLast(executor, "handler", handler)
     }
 

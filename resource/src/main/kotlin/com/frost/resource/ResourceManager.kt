@@ -5,6 +5,7 @@ import com.frost.common.event.EventBus
 import com.frost.common.logging.getLogger
 import com.frost.common.reflect.genericType
 import com.frost.common.reflect.subTypes
+import com.frost.resource.validation.ResourceInvalidException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.config.BeanPostProcessor
@@ -41,11 +42,6 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
 
     private fun validate(containers: Map<Class<out Resource>, ContainerImpl<out Resource>>) {
         val resources = containers.mapValues { it.value.sorted }
-        resources.forEach {
-            val duplicate = it.value.groupBy { it.id }.filter { it.value.size != 1 }.keys
-            if (duplicate.isNotEmpty()) throw DuplicateResourceException(it.key, duplicate)
-        }
-
         val errors = resources.values.flatten().flatMap {
             val bindingResult = DataBinder(it, "${it.javaClass.simpleName}[${it.id}]").bindingResult
             validator.validate(it, bindingResult)

@@ -1,9 +1,9 @@
 package com.frost
 
-import com.frost.resource.KeysMin
-import com.frost.resource.ReferTo
 import com.frost.resource.Resource
-import com.frost.resource.ResourceInvalidException
+import com.frost.resource.validation.KeysMin
+import com.frost.resource.validation.ReferTo
+import com.frost.resource.validation.ResourceInvalidException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.validation.DataBinder

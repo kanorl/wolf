@@ -1,5 +1,6 @@
 package com.frost.io.netty.filter
 
+import com.frost.common.Ordered
 import com.frost.io.netty.config.SocketSetting
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelFutureListener.CLOSE
@@ -15,7 +16,7 @@ import java.net.SocketAddress
 import javax.annotation.PostConstruct
 
 @ChannelHandler.Sharable
-abstract class ChannelFilter : ChannelInboundHandlerAdapter() {
+abstract class ChannelFilter : ChannelInboundHandlerAdapter(), Ordered {
 
     @Autowired
     private lateinit var socketSetting: SocketSetting
@@ -27,8 +28,6 @@ abstract class ChannelFilter : ChannelInboundHandlerAdapter() {
             IpSubnetFilterRule(it, 32 - it.toCharArray().filter { it -> it == '*' }.count() * 8, IpFilterRuleType.ACCEPT)
         }
     }
-
-    private var rejectedAction: ((ChannelHandlerContext) -> ChannelFuture)? = null
 
     override final fun channelRegistered(ctx: ChannelHandlerContext) {
         handleNewChannel(ctx)
@@ -49,12 +48,7 @@ abstract class ChannelFilter : ChannelInboundHandlerAdapter() {
         }
 
         if (!accept(ctx)) {
-            val rejectedAction = this.rejectedAction
-            if (rejectedAction != null) {
-                rejectedAction.invoke(ctx).addListener(CLOSE)
-            } else {
-                ctx.close()
-            }
+            channelRejected(ctx)?.let { it.addListener(CLOSE) } ?: ctx.close()
         }
 
         return true
@@ -62,7 +56,5 @@ abstract class ChannelFilter : ChannelInboundHandlerAdapter() {
 
     protected abstract fun accept(ctx: ChannelHandlerContext): Boolean
 
-    fun rejectedAction(rejectedAction: ((ChannelHandlerContext) -> ChannelFuture)) {
-        this.rejectedAction = rejectedAction
-    }
+    protected open fun channelRejected(ctx: ChannelHandlerContext): ChannelFuture? = null
 }

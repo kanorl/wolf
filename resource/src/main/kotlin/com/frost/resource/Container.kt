@@ -1,6 +1,7 @@
 package com.frost.resource
 
 import com.frost.common.random
+import com.frost.resource.validation.DuplicateResourceException
 import java.util.*
 
 interface Container<T : Resource> {
@@ -18,6 +19,13 @@ internal class ContainerImpl<T : Resource>(beans: List<T>) : Container<T> {
     val totalWeight = beans.sumBy { it.weight() }
     val map = beans.associateBy { it.id }
     val sorted = TreeSet<T>(beans)
+
+    init {
+        val duplicated = beans.groupBy { it.id }.filterValues { it.size > 1 }.keys
+        if (duplicated.size > 0) {
+            throw DuplicateResourceException(duplicated.first().javaClass, duplicated)
+        }
+    }
 
     override operator fun get(id: Int): T? = map[id]
 

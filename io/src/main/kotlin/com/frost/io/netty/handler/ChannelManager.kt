@@ -4,14 +4,18 @@ import com.frost.common.event.Event
 import com.frost.common.event.EventBus
 import com.frost.common.logging.getLogger
 import com.frost.io.Identity
+import com.frost.io.netty.ChannelIdentifyTimeoutException
+import com.frost.io.netty.ChannelReplacedException
+import com.frost.io.netty.config.SocketSetting
 import io.netty.channel.*
 import io.netty.util.AttributeKey
 import io.netty.util.concurrent.GlobalEventExecutor
+import io.netty.util.concurrent.ScheduledFuture
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
 @Component
@@ -19,23 +23,30 @@ import javax.annotation.PreDestroy
 class ChannelManager : ChannelDuplexHandler() {
     val logger by getLogger() // TODO session log
 
-    val keepAliveMillis = 30000L
-
     @Autowired
     private lateinit var eventBus: EventBus
+    @Autowired
+    private lateinit var setting: SocketSetting
+    private lateinit var cleanUpTask: ScheduledFuture<*>
 
-    private val channelGroup = ConcurrentHashMap<ChannelId, Channel>()
-    private val identifiedChannelGroups = ConcurrentHashMap<Class<out Identity>, ConcurrentHashMap<Identity, Channel>>()
+    private val channelGroup = ConcurrentHashMap<ChannelId, ChannelHandlerContext>()
+    private val identifiedChannelGroups = ConcurrentHashMap<Class<out Identity>, ConcurrentHashMap<Identity, ChannelHandlerContext>>()
     private val remover = ChannelFutureListener { channelClosed(it.channel()) }
     private val createTimeKey = AttributeKey.valueOf<Long>("createTime")
 
-    val cleanUpTask = GlobalEventExecutor.INSTANCE.scheduleWithFixedDelay({
-        val now = System.currentTimeMillis()
-        channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > keepAliveMillis }.forEach {
-            it.close()
-            logger.info("Close channel due to identify timeout: {}", it)
-        }
-    }, keepAliveMillis, keepAliveMillis, TimeUnit.MILLISECONDS)
+    @PostConstruct
+    private fun init() {
+        val closeDelay = setting.anonymousChannelCloseDelay
+        cleanUpTask = GlobalEventExecutor.INSTANCE.scheduleWithFixedDelay({
+            val now = System.currentTimeMillis()
+            channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay }.forEach {
+                it.fireExceptionCaught(ChannelIdentifyTimeoutException)
+                it.close()
+                logger.info("Close channel due to identify timeout: {}", it)
+            }
+        }, closeDelay, closeDelay, TimeUnit.MILLISECONDS)
+    }
+
 
     @PreDestroy
     private fun onDestroy() {
@@ -54,12 +65,9 @@ class ChannelManager : ChannelDuplexHandler() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         val channel = ctx.channel()
-        channel.attr(createTimeKey).setIfAbsent(System.currentTimeMillis())
-        if (channelGroup.putIfAbsent(channel.id(), channel) != null) {
-            logger.error("Duplicate Channel Id: {}", ctx.channel().id())
-            ctx.close()
-            return
-        }
+        ctx.attr(createTimeKey).setIfAbsent(System.currentTimeMillis())
+        val prev = channelGroup.putIfAbsent(channel.id(), ctx)
+        check(prev == null, { "Duplicate channel id: ${channel.id()}.(should never happen)" })
         channel.closeFuture().addListener(remover)
         super.channelActive(ctx)
     }
@@ -68,32 +76,35 @@ class ChannelManager : ChannelDuplexHandler() {
         val channel = channelGroup[channelId] ?: return
         channel.identity(identity)
 
-        val group = identifiedChannelGroups.computeIfAbsent(identity.javaClass, { ConcurrentHashMap<Identity, Channel>() })
+        val group = identifiedChannelGroups.computeIfAbsent(identity.javaClass, { ConcurrentHashMap<Identity, ChannelHandlerContext>() })
         val prev = group.putIfAbsent(identity, channel)
-        prev?.close()
+        prev?.let {
+            it.fireExceptionCaught(ChannelReplacedException)
+            it.close()
+        }
         eventBus.post(ChannelBindEvent(identity, prev != null))
     }
 
-    fun channel(channelId: ChannelId): Channel? = channelGroup[channelId]
-    fun channels(): Collection<Channel> = Collections.unmodifiableCollection(channelGroup.values)
-    fun channel(identity: Identity): Channel? = identifiedChannelGroups[identity.javaClass]?.get(identity)
-    fun channels(type: Class<out Identity>): Collection<Channel> = Collections.unmodifiableCollection(identifiedChannelGroups[type]?.values ?: emptyList())
+    internal fun channel(channelId: ChannelId): Channel? = channelGroup[channelId]?.channel()
+    internal fun channels(): Collection<Channel> = channelGroup.values.map { it.channel() }
+    internal fun channel(identity: Identity): Channel? = identifiedChannelGroups[identity.javaClass]?.get(identity)?.channel()
+    internal fun channels(type: Class<out Identity>): Collection<Channel> = identifiedChannelGroups[type]?.values?.map { it.channel() } ?: emptyList()
 }
 
-val identityKey = AttributeKey.valueOf<Identity>("identity")
+private val identityKey = AttributeKey.valueOf<Identity>("identity")
+fun ChannelHandlerContext.identity(): Identity? {
+    return this.attr(identityKey).get()
+}
+
 fun Channel.identity(): Identity? {
     return this.attr(identityKey).get()
 }
 
-private fun Channel.removeIdentity() {
-    return this.attr(identityKey).remove()
-}
-
-private fun Channel.identity(identity: Identity) {
+private fun ChannelHandlerContext.identity(identity: Identity) {
     this.attr(identityKey).setIfAbsent(identity)?.let { throw IllegalStateException("identity[$identity] is already set.") }
 }
 
-fun Channel.identified(): Boolean = this.identity() != null
+fun ChannelHandlerContext.identified(): Boolean = this.identity() != null
 
 data class ChannelClosedEvent(val identity: Identity) : Event
 data class ChannelBindEvent(val identity: Identity, val rebind: Boolean) : Event
