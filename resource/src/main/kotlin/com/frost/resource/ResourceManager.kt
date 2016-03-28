@@ -41,7 +41,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     }
 
     private fun validate(containers: Map<Class<out Resource>, ContainerImpl<out Resource>>) {
-        val resources = containers.mapValues { it.value.sorted }
+        val resources = containers.mapValues { it.value.set }
         val errors = resources.values.flatten().flatMap {
             val bindingResult = DataBinder(it, "${it.javaClass.simpleName}[${it.id}]").bindingResult
             validator.validate(it, bindingResult)

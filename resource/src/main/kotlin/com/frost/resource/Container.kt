@@ -9,40 +9,43 @@ interface Container<T : Resource> {
     operator fun get(id: Int): T?
     fun first(): T?
     fun last(): T?
-    fun next(current: T): T?
-    fun prev(current: T): T?
+    fun next(current: Int): T?
+    fun prev(current: Int): T?
     fun list(filter: ((T) -> Boolean)? = null): List<T>
     fun random(): T?
 }
 
-internal class ContainerImpl<T : Resource>(beans: List<T>) : Container<T> {
-    val totalWeight = beans.sumBy { it.weight() }
-    val map = beans.associateBy { it.id }
-    val sorted = TreeSet<T>(beans)
+internal class ContainerImpl<T : Resource> : Container<T> {
+    private val totalWeight: Int
+    private val map: Map<Int, T>
+    private val set: NavigableSet<T>
 
-    init {
+    constructor(beans: List<T>) {
         val duplicated = beans.groupBy { it.id }.filterValues { it.size > 1 }.keys
         if (duplicated.size > 0) {
             throw DuplicateResourceException(duplicated.first().javaClass, duplicated)
         }
+        totalWeight = beans.sumBy { it.weight() }
+        map = beans.associateBy { it.id }
+        set = TreeSet<T>(beans)
     }
 
     override operator fun get(id: Int): T? = map[id]
 
-    override fun first(): T? = sorted.first()
+    override fun first(): T? = set.first()
 
-    override fun last(): T? = sorted.last()
+    override fun last(): T? = set.last()
 
-    override fun next(current: T): T? = sorted.higher(current)
+    override fun next(current: Int): T? = map[current].let { set.higher(it) }
 
-    override fun prev(current: T): T? = sorted.lower(current)
+    override fun prev(current: Int): T? = map[current].let { set.lower(it) }
 
-    override fun list(filter: ((T) -> Boolean)?): List<T> = if (filter == null) sorted.toList() else sorted.filter { filter(it) }
+    override fun list(filter: ((T) -> Boolean)?): List<T> = if (filter == null) set.toList() else set.filter { filter(it) }
 
-    override fun random(): T? = sorted.random (totalWeight) { it.weight() }
+    override fun random(): T? = set.random (totalWeight) { it.weight() }
 }
 
-internal class DelegatingContainer<T : Resource>() : Container<T> {
+internal class DelegatingContainer<T : Resource> : Container<T> {
     internal lateinit var delegatee: Container<T>
 
     override fun get(id: Int): T? = delegatee[id]
@@ -51,9 +54,9 @@ internal class DelegatingContainer<T : Resource>() : Container<T> {
 
     override fun last(): T? = delegatee.last()
 
-    override fun next(current: T): T? = delegatee.next(current)
+    override fun next(current: Int): T? = delegatee.next(current)
 
-    override fun prev(current: T): T? = delegatee.prev(current)
+    override fun prev(current: Int): T? = delegatee.prev(current)
 
     override fun list(filter: ((T) -> Boolean)?): List<T> = delegatee.list(filter)
 
