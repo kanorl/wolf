@@ -56,7 +56,7 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
         val pipeline = ch.pipeline()
         filters.forEach { pipeline.addLast(it) }
-        pipeline.addLast("decoder", RequestDecoder(socketSetting.frameLengthMax, 0, 4, true, compressor))
+        pipeline.addLast("decoder", RequestDecoder(maxFrameLength = socketSetting.frameLengthMax, compressor = compressor))
                 .addLast("lengthPrepender", prepender)
                 .addLast("trafficController", ChannelInboundTrafficController(socketSetting.msgNumPerSecond))
                 .addLast("channelManager", channelManager)

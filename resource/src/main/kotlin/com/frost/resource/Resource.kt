@@ -1,19 +1,31 @@
 package com.frost.resource
 
+import com.frost.common.Ordered
 import com.frost.common.toJson
 import com.google.common.collect.ComparisonChain
 
-abstract class Resource : Comparable<Resource> {
+abstract class Resource : Ordered {
 
     abstract val id: Int
 
     fun weight(): Int = 0
 
-    override fun compareTo(other: Resource): Int = ComparisonChain.start().compare(this.javaClass.name, other.javaClass.name).compare(this.id, other.id).result()
+    override fun order(): Int = id
 
-    override fun hashCode(): Int = id.hashCode()
+    fun afterPropertiesSet() {
 
-    override fun equals(other: Any?): Boolean {
+    }
+
+    override final fun compareTo(other: Ordered): Int {
+        if (other !is Resource) {
+            return 1
+        }
+        return ComparisonChain.start().compare(this.javaClass.name, other.javaClass.name).compare(this.order(), other.order()).compare(this.id, other.id).result()
+    }
+
+    override final fun hashCode(): Int = id.hashCode()
+
+    override final fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != javaClass) return false
         other as Resource

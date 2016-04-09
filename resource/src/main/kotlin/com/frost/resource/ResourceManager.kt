@@ -7,7 +7,6 @@ import com.frost.common.reflect.genericType
 import com.frost.common.reflect.subTypes
 import com.frost.resource.validation.ResourceInvalidException
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextRefreshedEvent
@@ -27,16 +26,15 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     private lateinit var reader: Reader
     @Autowired
     private lateinit var validator: Validator
-    @Value("\${resource.path:\"\"}")
-    private lateinit var baseDir: String
-
+    @Autowired
+    private lateinit var setting: ResourceSetting
 
     private var containers = mapOf<Class<out Resource>, ContainerImpl<Resource>>()
     private var injectedContainers = hashMapOf<Class<out Resource>, DelegatingContainer<Resource>>()
 
     @PostConstruct
     private fun init() {
-        Resource::class.java.subTypes().forEach { containers += (it to ContainerImpl(reader.read(it, baseDir))) }
+        Resource::class.java.subTypes().forEach { containers += (it to ContainerImpl(reader.read(it, setting.path))) }
         validate(containers)
     }
 
@@ -83,7 +81,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     fun reload(vararg classes: Class<out Resource>): Boolean {
         for (clazz in classes) {
             try {
-                val reloaded = mapOf(clazz to ContainerImpl(reader.read(clazz, baseDir)))
+                val reloaded = mapOf(clazz to ContainerImpl(reader.read(clazz, setting.path)))
                 validate(reloaded)
                 containers + reloaded
                 logger.info("Resource reloaded: {}", clazz.simpleName)

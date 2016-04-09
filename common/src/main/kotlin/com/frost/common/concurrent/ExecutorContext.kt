@@ -1,53 +1,87 @@
 package com.frost.common.concurrent
 
-import com.frost.common.Order
-import com.frost.common.Ordered
 import com.frost.common.lang.insurePowerOf2
 import com.frost.common.logging.getLogger
+import com.frost.common.time.millis
 import com.google.common.util.concurrent.MoreExecutors
-import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicInteger
-import javax.annotation.PostConstruct
-import javax.annotation.PreDestroy
+import java.util.concurrent.atomic.AtomicBoolean
 
 val cpuNum = Runtime.getRuntime().availableProcessors()
 
-@Component
-class ExecutorContext {
-    val logger by getLogger()
+object ExecutorContext {
+    private val logger by getLogger()
+    private val parallelism = (cpuNum * 2).insurePowerOf2()
+    private val executor = ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
+    private val taskQueues = (1..parallelism).map { OrderedTaskQueue() }.toTypedArray()
+    private val transfer = Executors.newSingleThreadExecutor(NamedThreadFactory(name = "task-transfer", daemon = true))
 
-    private val index = AtomicInteger()
-    private val nThread = (cpuNum * 2).insurePowerOf2()
-    private val executors = (1..nThread).map {
-        ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, PriorityBlockingQueue<Runnable>(16, Comparator<Runnable> { a, b ->
-            val i1 = if (a is Ordered) a.order() else Order.NORMAL
-            val i2 = if (b is Ordered) b.order() else Order.NORMAL
-            i1.compareTo(i2)
-        }), NamedThreadFactory("executor-context"))
+    init {
+        transfer.submit {
+            while (true) {
+                var sleep = true
+                taskQueues.forEach {
+                    it.poll()?.let {
+                        executor.submit(it)
+                        sleep = false
+                    }
+                }
+                if (sleep) {
+                    5.millis().sleep()
+                }
+            }
+        }
     }
 
-    @PostConstruct
-    private fun init() {
-        logger.info("${ExecutorContext::class.java.simpleName} pool size: $nThread")
+    fun submit(owner: Any, task: () -> Any) {
+        taskQueues[owner.hashCode() and (taskQueues.size - 1)].offer(task)
     }
 
-    private fun next(): ExecutorService = executors[index.andIncrement and executors.size - 1]
-    private fun next(identity: Any): ExecutorService = executors[identity.hashCode() and executors.size - 1]
+    fun submit(task: () -> Any) = executor.submit(task)
 
-    fun submit(task: Runnable) = next().submit(task)
-    fun submit(task: () -> Unit) = next().submit(task)
-    fun <T> submit(task: Callable<T>): Future<T> = next().submit(task)
+    fun submit(task: Runnable) = executor.submit(task)
+}
 
-    fun submitTo(identity: Any, task: Runnable) = next(identity).submit(task)
-    fun submitTo(identity: Any, task: () -> Unit) = next(identity).submit(task)
-    fun <T> submitTo(identity: Any, task: Callable<T>): Future<T> = next(identity).submit(task)
+private class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*>> {
 
-    @PreDestroy
-    fun shutdown() {
-        executors.forEach { it.shutdownAndAwaitTermination() }
+    val queue = ConcurrentLinkedQueue<Callable<*>>()
+    val available = AtomicBoolean(true)
+
+    override val size: Int = queue.size
+
+    override fun iterator(): MutableIterator<Callable<*>> = queue.iterator()
+
+    override fun poll(): Callable<*>? {
+        if (!available.compareAndSet(true, false)) {
+            return null
+        }
+        val task = queue.poll()
+        task ?: setAvailable()
+        return task
     }
+
+    override fun peek(): Callable<*>? {
+        throw UnsupportedOperationException()
+    }
+
+    override fun offer(e: Callable<*>): Boolean = queue.offer(Callable<kotlin.Any> {
+        try {
+            e.call()
+        } finally {
+            setAvailable()
+        }
+    })
+
+    fun offer(e: Runnable) = queue.offer(Callable<kotlin.Any> {
+        try {
+            e.run()
+        } finally {
+            setAvailable()
+        }
+    })
+
+    fun setAvailable() = available.set(true);
 }
 
 fun ExecutorService.shutdownAndAwaitTermination(timeout: Long = 30, timeUnit: TimeUnit = TimeUnit.SECONDS): Boolean = MoreExecutors.shutdownAndAwaitTermination(this, timeout, timeUnit)

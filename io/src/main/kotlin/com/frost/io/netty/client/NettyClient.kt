@@ -78,10 +78,7 @@ class NettyClient {
 
 fun main(args: Array<String>) {
     val client = NettyClient(port = 5555)
-//    client.schedule(2000) {
-//        client.write(Command(1, 1), "ping")
-//    }
-    for (i in 1..60) {
+    client.schedule(2000) {
         client.write(Command(1, 1), "ping")
     }
 }

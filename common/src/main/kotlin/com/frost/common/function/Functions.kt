@@ -1,7 +1,7 @@
 package com.frost.common.function
 
 @Suppress("UNCHECKED_CAST")
-operator fun <R> Function<R>.invoke(args: Array<out Any>): R? {
+operator fun <R> Function<R>.invoke(args: List<Any>): R? {
     return when (this) {
         is Function0<R> -> this()
         is Function1<*, R> -> (this as (Any) -> R)(args[0])

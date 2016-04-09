@@ -13,9 +13,9 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
 
-class FunctionInvoker(val func: Function<*>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
+class RequestHandler(val func: Function<*>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
     fun invoke(request: Request<*>, channel: Channel): Any? {
-        return func.invoke(params.map { it.getValue(request, channel) }.toTypedArray())
+        return func.invoke(params.map { it.getValue(request, channel) })
     }
 }
 
@@ -34,14 +34,14 @@ inline fun <reified T> success(value: T? = null): Result<T> = Result(0, value)
 
 @Suppress("UNCHECKED_CAST")
 @Component
-class InvokerManager : BeanPostProcessor {
+class RequestHandlerManager : BeanPostProcessor {
     val logger by getLogger()
 
     @Autowired
     private lateinit var codec: Codec
 
-    private val invokers = hashMapOf<Command, FunctionInvoker>()
-    private var commandGroup = mapOf<Command, List<Class<out Identity>>>()
+    private val handlers = hashMapOf<Command, RequestHandler>()
+    private var commandPermission = mapOf<Command, List<Class<out Identity>>>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
         return bean;
@@ -67,15 +67,15 @@ class InvokerManager : BeanPostProcessor {
                         }
                     }.toTypedArray()
                     val command = Command(module, cmd)
-                    val prev = invokers.put(command, FunctionInvoker(func, params, typeArgs.last() == javaClass))
+                    val prev = handlers.put(command, RequestHandler(func, params, typeArgs.last() == javaClass))
                     prev?.let { throw IllegalStateException("Duplicate function $command") }
                     val fieldIdentities = it.getAnnotation(Identities::class.java)?.value ?: emptyArray()
                     if (fieldIdentities.isNotEmpty()) {
-                        commandGroup += (command to fieldIdentities.map { it.java } )
+                        commandPermission += (command to fieldIdentities.map { it.java } )
                     } else if (classIdentities.isNotEmpty()) {
-                        commandGroup += (command to classIdentities.map { it.java })
+                        commandPermission += (command to classIdentities.map { it.java })
                     } else {
-                        commandGroup += (command to listOf(Identity.Companion.Player::class.java))
+                        commandPermission += (command to listOf(Identity.Companion.Player::class.java))
                     }
                 },
                 { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
@@ -84,12 +84,12 @@ class InvokerManager : BeanPostProcessor {
     }
 
     @Synchronized
-    fun replace(command: Command, invoker: FunctionInvoker) {
-        invokers.put(command, invoker)
+    fun replace(command: Command, handler: RequestHandler) {
+        handlers.put(command, handler)
         logger.error("Invoker[{}] replaced", command)
     }
 
-    fun invoker(command: Command): FunctionInvoker? = invokers[command];
+    fun handler(command: Command): RequestHandler? = handlers[command];
 
-    fun checkAuth(command: Command, identity: Identity?): Boolean = identity != null && commandGroup[command]?.any { it.isAssignableFrom(identity.javaClass) } ?: false
+    fun accessible(identity: Identity?, command: Command): Boolean = identity != null && commandPermission[command]?.any { it.isAssignableFrom(identity.javaClass) } ?: false
 }

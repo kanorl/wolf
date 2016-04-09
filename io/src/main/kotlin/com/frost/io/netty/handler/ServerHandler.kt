@@ -15,27 +15,27 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     val logger by getLogger()
 
     @Autowired
-    private lateinit var manager: InvokerManager
+    private lateinit var manager: RequestHandlerManager
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
         val identity = ctx.identity()
-        if (!manager.checkAuth(request.command, identity)) {
+        if (!manager.accessible(identity, request.command)) {
             logger.debug("Access denied: {} from {} access {}", identity, ctx.channel(), request.command)
             return;
         }
-        val invoker = manager.invoker(request.command)
-        if (invoker == null) {
-            logger.error("No processor for command[{}]", request.command)
+        val handler = manager.handler(request.command)
+        if (handler == null) {
+            logger.error("No handler for command[{}]", request.command)
             return
         }
 
         var result: Any? = null
         try {
-            result = invoker.invoke(request, ctx.channel())
+            result = handler.invoke(request, ctx.channel())
         } catch(e: Exception) {
             logger.error("Request[cmd=${request.command}, identity=${ctx.channel().identity()}] process failed", e)
         }
-        if (invoker.responseOmit) {
+        if (handler.responseOmit) {
             return
         }
         if (result !is Result<*>?) {

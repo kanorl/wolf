@@ -18,9 +18,10 @@ interface Container<T : Resource> {
 internal class ContainerImpl<T : Resource> : Container<T> {
     private val totalWeight: Int
     private val map: Map<Int, T>
-    private val set: NavigableSet<T>
+    internal val set: NavigableSet<T>
 
     constructor(beans: List<T>) {
+        beans.forEach { it.afterPropertiesSet() }
         val duplicated = beans.groupBy { it.id }.filterValues { it.size > 1 }.keys
         if (duplicated.size > 0) {
             throw DuplicateResourceException(duplicated.first().javaClass, duplicated)
@@ -36,9 +37,9 @@ internal class ContainerImpl<T : Resource> : Container<T> {
 
     override fun last(): T? = set.last()
 
-    override fun next(current: Int): T? = map[current].let { set.higher(it) }
+    override fun next(current: Int): T? = map[current]?.let { set.higher(it) }
 
-    override fun prev(current: Int): T? = map[current].let { set.lower(it) }
+    override fun prev(current: Int): T? = map[current]?.let { set.lower(it) }
 
     override fun list(filter: ((T) -> Boolean)?): List<T> = if (filter == null) set.toList() else set.filter { filter(it) }
 

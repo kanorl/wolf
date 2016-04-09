@@ -21,6 +21,7 @@ class SocketSetting {
     var readTimeoutSeconds = 60
     var heartbeatInterval = 60000L
     var anonymousChannelCloseDelay = 30000L
+    var codec = ""
 
     override fun toString(): String {
         return settingToString(this, "Socket Setting")
