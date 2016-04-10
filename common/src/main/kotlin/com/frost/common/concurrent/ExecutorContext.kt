@@ -1,46 +1,58 @@
 package com.frost.common.concurrent
 
-import com.frost.common.lang.insurePowerOf2
+import com.frost.common.lang.ceilingPowerOf2
 import com.frost.common.logging.getLogger
 import com.frost.common.time.millis
 import com.google.common.util.concurrent.MoreExecutors
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.LockSupport
 
 val cpuNum = Runtime.getRuntime().availableProcessors()
 
 object ExecutorContext {
     private val logger by getLogger()
-    private val parallelism = (cpuNum * 2).insurePowerOf2()
+    private val parallelism = (cpuNum * 2).ceilingPowerOf2()
     private val executor = ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
     private val taskQueues = (1..parallelism).map { OrderedTaskQueue() }.toTypedArray()
-    private val transfer = Executors.newSingleThreadExecutor(NamedThreadFactory(name = "task-transfer", daemon = true))
+    private val transferer = Executors.newSingleThreadExecutor(NamedThreadFactory(name = "task-transferer", daemon = true))
 
     init {
-        transfer.submit {
+        transferer.submit {
+            val parkNanos = 5.millis().nanos
             while (true) {
-                var sleep = true
-                taskQueues.forEach {
-                    it.poll()?.let {
+                var park = true
+                for (queue in taskQueues) {
+                    queue.poll()?.let {
                         executor.submit(it)
-                        sleep = false
+                        park = false
                     }
                 }
-                if (sleep) {
-                    5.millis().sleep()
+                if (park) {
+                    LockSupport.parkNanos(parkNanos)
                 }
             }
         }
     }
 
-    fun submit(owner: Any, task: () -> Any) {
+    fun submit(owner: Any, task: Runnable) {
         taskQueues[owner.hashCode() and (taskQueues.size - 1)].offer(task)
     }
 
-    fun submit(task: () -> Any) = executor.submit(task)
+    fun submit(owner: Any, task: Callable<*>) {
+        taskQueues[owner.hashCode() and (taskQueues.size - 1)].offer(task)
+    }
+
+    fun submit(owner: Any, task: () -> Unit) {
+        taskQueues[owner.hashCode() and (taskQueues.size - 1)].offer(task)
+    }
+
+    fun submit(task: Callable<*>) = executor.submit(task)
 
     fun submit(task: Runnable) = executor.submit(task)
+
+    fun submit(task: () -> Any) = executor.submit(task)
 }
 
 private class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*>> {

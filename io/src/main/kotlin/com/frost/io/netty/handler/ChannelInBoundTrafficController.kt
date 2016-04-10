@@ -25,7 +25,7 @@ class ChannelInboundTrafficController(val readLimit: Int) : ChannelInboundHandle
             return
         }
         val num = counter.incrementAndGet()
-        if (num > readLimit) {
+        if (readLimit > 0 && num > readLimit) {
             val now = System.currentTimeMillis()
             if (now - lastCheckTime < 1000) {
                 ctx.fireExceptionCaught(ChannelInboundTrafficExcessException)

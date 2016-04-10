@@ -1,6 +1,6 @@
 package com.frost.common.event
 
-import com.frost.common.Ordered
+import com.frost.common.Identified
 import com.frost.common.concurrent.ExecutorContext
 import com.frost.common.reflect.genericType
 import com.frost.common.reflect.subTypes
@@ -14,7 +14,9 @@ import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
 
-interface Event : Ordered
+interface Event
+
+interface IdentifiedEvent: Event, Identified<Any>
 
 @Suppress("UNCHECKED_CAST")
 @Component
@@ -54,20 +56,14 @@ class EventBus {
 
     @Autowired
     private lateinit var listenerManager: EventListenerManager
-    @Autowired
-    private lateinit var executor: ExecutorContext
 
     fun post(event: Event) {
         listenerManager.getListeners(event.javaClass).forEach { listener ->
-            executor.submit(object : Runnable, Ordered {
-                override fun order(): Int {
-                    return event.order()
-                }
-
-                override fun run() {
-                    listener.onEvent(event)
-                }
-            })
+            if(event is IdentifiedEvent){
+                ExecutorContext.submit(event.id){ listener.onEvent(event) }
+            }else{
+                ExecutorContext.submit{ listener.onEvent(event) }
+            }
         }
     }
 

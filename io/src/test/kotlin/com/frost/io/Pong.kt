@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ConfigurableApplicationContext
 
 @Module(1)
-@Identities(arrayOf(Identity::class))
+@Identities(arrayOf(Identity.Companion.Unknown::class))
 class Pong {
     val logger by getLogger()
 

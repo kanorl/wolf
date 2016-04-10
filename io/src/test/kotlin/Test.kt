@@ -13,6 +13,8 @@ open class Test {
 }
 
 fun main(args: Array<String>) {
+    // -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
+    System.setProperty("Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector")
     var context: ConfigurableApplicationContext? = null
     try {
         context = SpringApplication.run(Test::class.java)

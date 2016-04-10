@@ -29,7 +29,7 @@ class CacheSetting {
 }
 
 class PersistSetting {
-    var interval = 60L
+    var interval = 60
     var poolSize = cpuNum * 2
 }
 

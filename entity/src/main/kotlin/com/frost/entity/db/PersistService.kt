@@ -4,6 +4,7 @@ import com.frost.common.concurrent.ExecutorContext
 import com.frost.common.concurrent.lock.lock
 import com.frost.common.logging.getLogger
 import com.frost.common.scheduling.Scheduler
+import com.frost.common.time.seconds
 import com.frost.entity.EntitySetting
 import com.frost.entity.IEntity
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,8 +28,6 @@ internal class ImmediatePersistService : PersistService {
 
     @Autowired
     private lateinit var persistence: Persistence
-    @Autowired
-    private lateinit var executorContext: ExecutorContext
 
     @PostConstruct
     private fun init() {
@@ -47,7 +46,7 @@ internal class ImmediatePersistService : PersistService {
     }
 
     internal fun submit(task: PersistTask) {
-        executorContext.submitTo(task.entity.id, task)
+        ExecutorContext.submit(task.entity.id, task)
     }
 }
 
@@ -71,7 +70,7 @@ internal class ScheduledPersistService : PersistService {
 
     @PostConstruct
     private fun init() {
-        scheduler.scheduleWithFixedDelay({ persist() }, setting.persistInterval * 1000)
+        scheduler.scheduleWithFixedDelay(setting.persistInterval.seconds(), "scheduled-persist-task"){ persist() }
     }
 
     @PreDestroy

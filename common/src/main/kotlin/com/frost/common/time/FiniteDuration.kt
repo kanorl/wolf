@@ -11,6 +11,7 @@ data class FiniteDuration(val value: Long, val timeUnit: TimeUnit) {
     val seconds = timeUnit.toSeconds(value)
     val minutes = timeUnit.toMinutes(value)
     val days = timeUnit.toDays(value)
+    val nanos = timeUnit.toNanos(value)
     fun sleep() = timeUnit.sleep(value)
 }
 

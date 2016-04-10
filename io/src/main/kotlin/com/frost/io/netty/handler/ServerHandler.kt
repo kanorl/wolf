@@ -1,5 +1,6 @@
 package com.frost.io.netty.handler
 
+import com.frost.common.concurrent.ExecutorContext
 import com.frost.common.logging.getLogger
 import com.frost.io.Request
 import com.frost.io.Response
@@ -19,29 +20,31 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
         val identity = ctx.identity()
-        if (!manager.accessible(identity, request.command)) {
-            logger.debug("Access denied: {} from {} access {}", identity, ctx.channel(), request.command)
+        val command = request.command
+        if (!manager.accessible(identity, command)) {
+            logger.debug("Access denied: {} from {} access {}", identity, ctx.channel(), command)
             return;
         }
-        val handler = manager.handler(request.command)
+        val handler = manager.handler(command)
         if (handler == null) {
-            logger.error("No handler for command[{}]", request.command)
+            logger.error("No handler for command[{}]", command)
             return
         }
-
-        var result: Any? = null
-        try {
-            result = handler.invoke(request, ctx.channel())
-        } catch(e: Exception) {
-            logger.error("Request[cmd=${request.command}, identity=${ctx.channel().identity()}] process failed", e)
+        val action = {
+            var result: Any? = null
+            try {
+                result = handler.invoke(request, ctx.channel())
+            } catch(e: Exception) {
+                logger.error("Request[cmd=$command, identity=${ctx.channel().identity()}] process failed", e)
+            }
+            if (!handler.responseOmit && result is Result<*>?) {
+                ctx.writeAndFlush(Response(command, result?.value, result?.code ?: -1))
+            }
         }
-        if (handler.responseOmit) {
-            return
+        when {
+            identity != null -> ExecutorContext.submit(identity, action)
+            manager.isSync(command) -> ExecutorContext.submit(command, action)
+            else -> ExecutorContext.submit(action)
         }
-        if (result !is Result<*>?) {
-            return
-        }
-
-        ctx.writeAndFlush(Response(request.command, result?.value, result?.code ?: -1))
     }
 }

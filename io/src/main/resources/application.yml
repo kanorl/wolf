@@ -5,4 +5,4 @@ io-netty:
   childOptions:
   frameLengthMax:
   connectionsMax:
-  codec: "protobuf"
+  codec: "string"

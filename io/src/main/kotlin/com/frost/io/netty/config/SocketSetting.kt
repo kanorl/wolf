@@ -15,12 +15,12 @@ class SocketSetting {
     var childOptions: Map<String, Any> = hashMapOf()
     var frameLengthMax = 1024
     var connectionsMax = 5000
-    var msgNumPerSecond: Int = 20
+    var msgNumPerSecond: Int = 0
     var compressThreshold: Int = 0
     var whiteList = emptyArray<String>()
     var readTimeoutSeconds = 60
     var heartbeatInterval = 60000L
-    var anonymousChannelCloseDelay = 30000L
+    var anonymousChannelCloseDelay = 3000000
     var codec = ""
 
     override fun toString(): String {

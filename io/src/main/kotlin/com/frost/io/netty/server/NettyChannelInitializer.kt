@@ -1,6 +1,5 @@
 package com.frost.io.netty.server
 
-import com.frost.common.concurrent.NamedThreadFactory
 import com.frost.common.logging.getLogger
 import com.frost.io.Compressor
 import com.frost.io.netty.codec.RequestDecoder
@@ -15,13 +14,10 @@ import io.netty.channel.ChannelInitializer
 import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.timeout.ReadTimeoutHandler
-import io.netty.util.concurrent.DefaultEventExecutorGroup
-import io.netty.util.concurrent.EventExecutorGroup
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
-import javax.annotation.PreDestroy
 
 @Component
 class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
@@ -41,14 +37,12 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
     private var compressor: Compressor? = null
 
     private val prepender = LengthFieldPrepender(4)
-    private lateinit var executor: EventExecutorGroup
     private lateinit var filters: List<ChannelFilter>
     private lateinit var interceptors: List<RequestInterceptor>
 
 
     @PostConstruct
     private fun init() {
-        executor = DefaultEventExecutorGroup(socketSetting.poolSize, NamedThreadFactory("io-handler"))
         filters = ctx.getBeansOfType(ChannelFilter::class.java).values.sorted()
         interceptors = ctx.getBeansOfType(RequestInterceptor::class.java).values.sorted()
     }
@@ -63,11 +57,6 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
                 .addLast("writer", writer)
                 .addLast("readTimeoutHandler", ReadTimeoutHandler(socketSetting.readTimeoutSeconds))
         interceptors.forEach { pipeline.addLast(it) }
-        pipeline.addLast(executor, "handler", handler)
-    }
-
-    @PreDestroy
-    private fun onDestroy() {
-        executor.shutdownGracefully().sync()
+        pipeline.addLast("handler", handler)
     }
 }

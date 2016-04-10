@@ -4,7 +4,7 @@ fun Int.isPowerOf2(): Boolean = this and (this - 1) == 0
 
 private val MaximumPowerOf2 = 1 shl 30
 
-fun Int.insurePowerOf2(): Int {
+fun Int.ceilingPowerOf2(): Int {
     var n = this - 1
     n = n or (n ushr 1)
     n = n or (n ushr 2)

@@ -3,20 +3,18 @@ package com.frost.io.netty.handler
 import com.frost.common.event.Event
 import com.frost.common.event.EventBus
 import com.frost.common.logging.getLogger
+import com.frost.common.scheduling.Scheduler
+import com.frost.common.time.millis
 import com.frost.io.Identity
 import com.frost.io.netty.ChannelIdentifyTimeoutException
 import com.frost.io.netty.ChannelReplacedException
 import com.frost.io.netty.config.SocketSetting
 import io.netty.channel.*
 import io.netty.util.AttributeKey
-import io.netty.util.concurrent.GlobalEventExecutor
-import io.netty.util.concurrent.ScheduledFuture
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
 import javax.annotation.PostConstruct
-import javax.annotation.PreDestroy
 
 @Component
 @ChannelHandler.Sharable
@@ -27,7 +25,8 @@ class ChannelManager : ChannelDuplexHandler() {
     private lateinit var eventBus: EventBus
     @Autowired
     private lateinit var setting: SocketSetting
-    private lateinit var cleanUpTask: ScheduledFuture<*>
+    @Autowired
+    private lateinit var scheduler: Scheduler
 
     private val channelGroup = ConcurrentHashMap<ChannelId, ChannelHandlerContext>()
     private val identifiedChannelGroups = ConcurrentHashMap<Class<out Identity>, ConcurrentHashMap<Identity, ChannelHandlerContext>>()
@@ -37,24 +36,18 @@ class ChannelManager : ChannelDuplexHandler() {
     @PostConstruct
     private fun init() {
         val closeDelay = setting.anonymousChannelCloseDelay
-        cleanUpTask = GlobalEventExecutor.INSTANCE.scheduleWithFixedDelay({
+        scheduler.scheduleWithFixedDelay(closeDelay.millis(), "AnonymousChannelCleanUp"){
             val now = System.currentTimeMillis()
             channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay }.forEach {
                 it.fireExceptionCaught(ChannelIdentifyTimeoutException)
                 it.close()
                 logger.info("Close channel due to identify timeout: {}", it)
             }
-        }, closeDelay, closeDelay, TimeUnit.MILLISECONDS)
-    }
-
-
-    @PreDestroy
-    private fun onDestroy() {
-        cleanUpTask.cancel(true)
+        }
     }
 
     private fun channelClosed(channel: Channel) {
-        channelGroup.remove(channel.id(), channel)
+        channelGroup.remove(channel.id())?.let { check(it.channel() == channel) } ?: logger.error("Failed to remove Channel: {}", channel)
         val identity = channel.attr(identityKey).get()
         identity?.let {
             identifiedChannelGroups.remove(it, channel)
@@ -66,7 +59,7 @@ class ChannelManager : ChannelDuplexHandler() {
     override fun channelActive(ctx: ChannelHandlerContext) {
         val channel = ctx.channel()
         ctx.attr(createTimeKey).setIfAbsent(System.currentTimeMillis())
-        val prev = channelGroup.putIfAbsent(channel.id(), ctx)
+        val prev = channelGroup.putIfAbsent(ctx.channel().id(), ctx)
         check(prev == null, { "Duplicate channel id: ${channel.id()}.(should never happen)" })
         channel.closeFuture().addListener(remover)
         super.channelActive(ctx)

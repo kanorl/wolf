@@ -1,5 +1,6 @@
 package com.frost.common.scheduling
 
+import com.frost.common.Identified
 import com.frost.common.concurrent.*
 import com.frost.common.logging.getLogger
 import com.frost.common.logging.loggingFormat
@@ -74,12 +75,9 @@ internal class DelegatingScheduler : Scheduler {
 }
 
 private class LoggingRunnable(val delegate: Runnable) : Runnable {
+    val logger by getLogger()
 
-    companion object {
-        val logger by getLogger()
-    }
-
-    override fun run() {
+    val action = {
         val name = if (delegate is NamedRunnable) delegate.name else delegate.javaClass.name
         logger.info("开始执行[{}]", name)
         try {
@@ -88,5 +86,13 @@ private class LoggingRunnable(val delegate: Runnable) : Runnable {
             logger.error("执行失败[{}]".loggingFormat(name), e)
         }
         logger.info("完成执行[{}]", name)
+    }
+
+    override fun run() {
+        if (delegate is Identified<*>) {
+            ExecutorContext.submit(delegate.id, action)
+        } else {
+            ExecutorContext.submit(action)
+        }
     }
 }

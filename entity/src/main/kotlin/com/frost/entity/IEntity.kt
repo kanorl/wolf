@@ -14,14 +14,17 @@ abstract class IEntity<T : Comparable<T>> : Comparable<IEntity<T>> {
 
     abstract var id: T
 
-    final fun markEdited(): IEntity<T> {
+    final fun save(): IEntity<T> {
         editVersion.incrementAndGet()
         return this
     }
 
-    final fun unmarkEdited() {
+    final fun postSave() {
         assert(editVersion.get() >= dbVersion.get(), { "editVersion < dbVersion" })
-        dbVersion.set(editVersion.get())
+        val dbV = dbVersion.get()
+        val eV = editVersion.get()
+        val set = dbVersion.compareAndSet(dbV, editVersion.get())
+        check(set, {"Failed to update db version: from $dbV to $eV"})
     }
 
     final fun edited() = editVersion.get() > dbVersion.get()

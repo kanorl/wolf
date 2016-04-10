@@ -1,6 +1,6 @@
 package com.frost.common
 
 
-interface Identified<ID> {
+interface Identified<out ID: Any> {
     val id: ID
 }

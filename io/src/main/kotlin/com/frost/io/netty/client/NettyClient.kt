@@ -1,6 +1,7 @@
 package com.frost.io.netty.client
 
 import com.frost.common.logging.getLogger
+import com.frost.common.time.seconds
 import com.frost.io.Command
 import com.frost.io.Request
 import io.netty.bootstrap.Bootstrap
@@ -16,6 +17,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioSocketChannel
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class NettyClient {
     private val logger by getLogger()
@@ -38,7 +40,7 @@ class NettyClient {
         }
     }
 
-    private fun connect() {
+    fun connect() {
         if (channel?.isActive ?: false) {
             return
         }
@@ -57,7 +59,7 @@ class NettyClient {
             }
             channel = future.channel()
         } catch(e: Throwable) {
-            logger.error("连接失败: {}", e.message)
+            logger.error("连接失败: ${e.message}", e)
         }
     }
 
@@ -70,15 +72,32 @@ class NettyClient {
         channel?.writeAndFlush(Request(cmd, msg))
     }
 
-    fun schedule(interval: Long, task: () -> Unit) {
+    fun scheduleWithFixedDelay(delay: Long, task: () -> Unit) {
         connect()
-        channel?.eventLoop()?.scheduleWithFixedDelay(task, 0, interval, TimeUnit.MILLISECONDS)
+        channel?.eventLoop()?.scheduleWithFixedDelay(task, 0, delay, TimeUnit.MILLISECONDS)
+    }
+
+    fun scheduleAtFixedRate(period: Long, task: () -> Unit) {
+        connect()
+        channel?.eventLoop()?.scheduleAtFixedRate(task, 0, period, TimeUnit.MILLISECONDS)
+    }
+
+    fun scheduleOnce(delay: Long, task: () -> Unit) {
+        connect()
+        channel?.eventLoop()?.schedule(task, delay, TimeUnit.MILLISECONDS)
     }
 }
 
 fun main(args: Array<String>) {
-    val client = NettyClient(port = 5555)
-    client.schedule(2000) {
-        client.write(Command(1, 1), "ping")
-    }
+    val a = AtomicInteger()
+    val eventLoopGroup = NioEventLoopGroup(8)
+//    val client = NettyClient(port = 5555, eventLoopGroup = eventLoopGroup)
+//    client.connect()
+        for (i in 1..1000) {
+            val client = NettyClient(port = 5555, eventLoopGroup = eventLoopGroup)
+            client.scheduleAtFixedRate(1000 / 50) {
+                    client.write(Command(1, 1), "ping-" + a.andIncrement)
+            }
+        }
+    10.seconds().sleep()
 }

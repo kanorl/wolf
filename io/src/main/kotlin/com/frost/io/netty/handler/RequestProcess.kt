@@ -42,6 +42,7 @@ class RequestHandlerManager : BeanPostProcessor {
 
     private val handlers = hashMapOf<Command, RequestHandler>()
     private var commandPermission = mapOf<Command, List<Class<out Identity>>>()
+    private var syncCommands = setOf<Command>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
         return bean;
@@ -54,7 +55,8 @@ class RequestHandlerManager : BeanPostProcessor {
         val classIdentities = type.getAnnotation(Identities::class.java)?.value ?: emptyArray()
         ReflectionUtils.doWithFields(type,
                 {
-                    val cmd = it.getAnnotation(Cmd::class.java)!!.value
+                    val cmdAnno = it.getAnnotation(Cmd::class.java)
+                    val cmd = cmdAnno.value
                     val func = it.safeGet<Function<Result<*>>>(bean)!!
                     val typeArgs = genericTypes(it.type, func.javaClass)
                     val parameterTypes = typeArgs.sliceArray(0 until typeArgs.lastIndex)
@@ -77,6 +79,9 @@ class RequestHandlerManager : BeanPostProcessor {
                     } else {
                         commandPermission += (command to listOf(Identity.Companion.Player::class.java))
                     }
+                    if (cmdAnno.sync) {
+                        syncCommands += command
+                    }
                 },
                 { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
         )
@@ -89,7 +94,12 @@ class RequestHandlerManager : BeanPostProcessor {
         logger.error("Invoker[{}] replaced", command)
     }
 
+    fun isSync(command: Command) = syncCommands.contains(command)
+
     fun handler(command: Command): RequestHandler? = handlers[command];
 
-    fun accessible(identity: Identity?, command: Command): Boolean = identity != null && commandPermission[command]?.any { it.isAssignableFrom(identity.javaClass) } ?: false
+    fun accessible(identity: Identity?, command: Command): Boolean {
+        val i = identity ?: Identity.Companion.Unknown
+        return commandPermission[command]?.any { it.isAssignableFrom(i.javaClass) } ?: false
+    }
 }

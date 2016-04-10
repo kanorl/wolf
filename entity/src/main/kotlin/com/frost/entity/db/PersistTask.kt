@@ -4,9 +4,9 @@ import com.frost.entity.IEntity
 
 internal abstract class PersistTask(val Persistence: Persistence, val entity: IEntity<*>, val callback: (() -> Unit)?) : Runnable {
     companion object {
-        fun saveTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Save(Persistence, entity.markEdited(), callback)
-        fun updateTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Update(Persistence, entity.markEdited(), callback)
-        fun removeTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Remove(Persistence, entity.markEdited(), callback)
+        fun saveTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Save(Persistence, entity.save(), callback)
+        fun updateTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Update(Persistence, entity.save(), callback)
+        fun removeTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Remove(Persistence, entity.save(), callback)
     }
 
     override final fun run() {
@@ -14,7 +14,7 @@ internal abstract class PersistTask(val Persistence: Persistence, val entity: IE
             return;
         }
         persist()
-        entity.unmarkEdited()
+        entity.postSave()
         callback?.invoke()
     }
 

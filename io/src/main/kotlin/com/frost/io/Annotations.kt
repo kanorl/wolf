@@ -13,7 +13,7 @@ annotation class Module(val value: Short)
 
 @Retention(RUNTIME)
 @Target(FIELD)
-annotation class Cmd(val value: Byte)
+annotation class Cmd(val value: Byte, val sync: Boolean = false)
 
 @Retention(RUNTIME)
 @Target(FIELD, CLASS)

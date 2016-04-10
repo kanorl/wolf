@@ -1,6 +1,7 @@
 package com.frost.entity.cache
 
 import com.frost.common.logging.getLogger
+import com.frost.common.scheduling.Scheduler
 import com.frost.common.toJson
 import com.frost.entity.EntitySetting
 import com.frost.entity.IEntity
@@ -25,13 +26,15 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
     private lateinit var querier: Querier
     @Autowired
     private lateinit var setting: EntitySetting
+    @Autowired
+    private lateinit var schduler: Scheduler
 
     private val removing = newConcurrentHashSet<ID>()
     private val updating = ConcurrentHashMap<ID, E>()
 
     private val dbLoader = CacheLoader.from(Function<ID, E> {
         val loaded = querier.one(it, clazz)
-        if (removing.contains(it)) null else updating.remove(it)?.let { it } ?: loaded
+        if (removing.contains(it)) null else updating.remove(it) ?: loaded
     })
     private lateinit var cache: LoadingCache<ID, E>
 

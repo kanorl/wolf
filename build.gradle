@@ -32,6 +32,7 @@ ext {
     validator_collection_version = '2.1.6'
     jackson_version = '2.7.2'
     mongo_version = '3.2.2'
+    disruptor_version = '3.3.4'
 }
 
 ext {
@@ -77,6 +78,7 @@ ext {
             "io.protostuff:protostuff-core:$protostuff_version",
             "io.protostuff:protostuff-runtime:$protostuff_version"
     ]
+    disruptor = "com.lmax:disruptor:$disruptor_version"
 }
 
 allprojects {
@@ -100,6 +102,7 @@ allprojects {
         compile apache_commons
         compile reflections
         compile jackson
+        compile disruptor
     }
     configurations {
         all*.exclude group: "ch.qos.logback"

@@ -3,13 +3,11 @@ package com.frost.common.concurrent
 import com.frost.common.Identified
 import java.util.concurrent.Callable
 
-abstract class NamedRunnable : Runnable {
-    abstract val name: String
-
-    override fun toString(): String = name
+interface NamedRunnable : Runnable {
+     val name: String
 }
 
-inline fun namedTask(name: String, crossinline op: () -> Unit): NamedRunnable = object : NamedRunnable() {
+inline fun namedTask(name: String, crossinline op: () -> Unit): NamedRunnable = object : NamedRunnable {
     override val name: String = name
 
     override fun run() = op()
