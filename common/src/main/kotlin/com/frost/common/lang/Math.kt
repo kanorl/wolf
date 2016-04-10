@@ -1,6 +1,7 @@
 package com.frost.common.lang
 
-fun Int.isPowerOf2(): Boolean = this and (this - 1) == 0
+val Int.isPowerOf2: Boolean
+    get() = this and (this - 1) == 0
 
 private val MaximumPowerOf2 = 1 shl 30
 
@@ -15,3 +16,13 @@ fun Int.ceilingPowerOf2(): Int {
 }
 
 fun Int.abs(): Int = Math.abs(this)
+
+val Int.isPositive: Boolean
+    get() = this > 0
+val Int.isNegative: Boolean
+    get() = this < 0
+
+val Long.isPositive: Boolean
+    get() = this > 0
+val Long.isNegative: Boolean
+    get() = this < 0

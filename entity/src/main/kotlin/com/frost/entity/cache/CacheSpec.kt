@@ -23,20 +23,7 @@ annotation class CacheSpec(
         val preLoad: String = "",
 
         /**
-         * 持久化策略
+         * 持久化间隔: 60000ms 60s 1m
          */
-        val persistencePolicy: PersistencePolicy = PersistencePolicy.Immediately
+        val persistInterval: String = ""
 )
-
-enum class PersistencePolicy {
-
-    /**
-     * 立即
-     */
-    Immediately,
-
-    /**
-     * 定时
-     */
-    Scheduled
-}

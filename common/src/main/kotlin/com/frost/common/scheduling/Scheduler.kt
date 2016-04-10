@@ -57,16 +57,16 @@ internal class DelegatingScheduler : Scheduler {
             delegate.schedule(LoggingRunnable(toNamedTask(taskName, task)), startTime.toDate())
 
     override fun scheduleOnce(delay: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduledExecutor.schedule(LoggingRunnable(toNamedTask(taskName, task)), delay.value, delay.timeUnit)
+            delegate.scheduledExecutor.schedule(LoggingRunnable(toNamedTask(taskName, task)), delay.duration, delay.timeUnit)
 
     override fun scheduleAtFixedRate(period: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduledExecutor.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task)), 0, period.value, period.timeUnit)
+            delegate.scheduledExecutor.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task)), 0, period.duration, period.timeUnit)
 
     override fun scheduleAtFixedRate(startTime: LocalDateTime, period: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
             delegate.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task)), startTime.toDate(), period.millis)
 
     override fun scheduleWithFixedDelay(delay: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduledExecutor.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task)), 0, delay.value, delay.timeUnit)
+            delegate.scheduledExecutor.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task)), 0, delay.duration, delay.timeUnit)
 
     override fun scheduleWithFixedDelay(startTime: LocalDateTime, delay: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
             delegate.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task)), startTime.toDate(), delay.millis)

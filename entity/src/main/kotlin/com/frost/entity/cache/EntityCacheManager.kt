@@ -3,8 +3,7 @@ package com.frost.entity.cache
 import com.frost.common.reflect.genericTypes
 import com.frost.common.reflect.safeSet
 import com.frost.entity.EntitySetting
-import com.frost.entity.db.ImmediatePersistService
-import com.frost.entity.db.ScheduledPersistService
+import com.frost.entity.db.PersistService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.ApplicationContext
@@ -18,9 +17,7 @@ class EntityCacheManager : BeanPostProcessor {
     @Autowired
     private lateinit var ctx: ApplicationContext
     @Autowired
-    private lateinit var immediatePersist: ImmediatePersistService
-    @Autowired
-    private lateinit var schedulePersist: ScheduledPersistService
+    private lateinit var persistImpl: PersistService
     @Autowired
     private lateinit var setting: EntitySetting
 
@@ -32,9 +29,7 @@ class EntityCacheManager : BeanPostProcessor {
         ReflectionUtils.doWithFields(bean.javaClass,
                 {
                     val clazz = it.genericTypes()[1]
-                    val cacheSpec = clazz.getAnnotation(CacheSpec::class.java)
-                    val scheduled = cacheSpec.persistencePolicy == PersistencePolicy.Scheduled && setting.persistInterval > 0
-                    val cache = entityCaches.computeIfAbsent(clazz, { ctx.getBean(EntityCacheImpl::class.java, it, if (scheduled) schedulePersist else immediatePersist) })
+                    val cache = entityCaches.computeIfAbsent(clazz, { ctx.getBean(EntityCacheImpl::class.java, clazz) })
                     it.safeSet(bean, cache)
                 },
                 { EntityCache::class.java.isAssignableFrom(it.type) }

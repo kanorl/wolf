@@ -1,6 +1,7 @@
 package com.frost.common.concurrent
 
 import com.frost.common.lang.ceilingPowerOf2
+import com.frost.common.lang.isPowerOf2
 import com.frost.common.logging.getLogger
 import com.frost.common.time.millis
 import com.google.common.util.concurrent.MoreExecutors
@@ -13,9 +14,10 @@ val cpuNum = Runtime.getRuntime().availableProcessors()
 
 object ExecutorContext {
     private val logger by getLogger()
-    private val parallelism = (cpuNum * 2).ceilingPowerOf2()
+    val parallelism: Int = (cpuNum * 2).ceilingPowerOf2()
+    private var taskPools = arrayOf<TaskPool>()
+    val defaultTaskPool = createTaskPool("default")
     private val executor = ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
-    private val taskQueues = (1..parallelism).map { OrderedTaskQueue() }.toTypedArray()
     private val transferer = Executors.newSingleThreadExecutor(NamedThreadFactory(name = "task-transferer", daemon = true))
 
     init {
@@ -23,10 +25,12 @@ object ExecutorContext {
             val parkNanos = 5.millis().nanos
             while (true) {
                 var park = true
-                for (queue in taskQueues) {
-                    queue.poll()?.let {
-                        executor.submit(it)
-                        park = false
+                for (taskPool in taskPools) {
+                    for (queue in taskPool.taskQueues) {
+                        queue.poll()?.let {
+                            executor.submit(it)
+                            park = false
+                        }
                     }
                 }
                 if (park) {
@@ -34,6 +38,35 @@ object ExecutorContext {
                 }
             }
         }
+    }
+
+    @Synchronized
+    fun createTaskPool(name: String, parallelism: Int = this.parallelism): TaskPool {
+        taskPools.find { it.name == name }?.let { throw IllegalStateException("TaskPool[$name] already exists") }
+        val p = TaskPool(name, parallelism)
+        taskPools += p
+        logger.info("TaskPool[{}] Created.", name)
+        return p
+    }
+
+    fun submit(owner: Any, task: Runnable) = defaultTaskPool.submit(owner, task)
+
+    fun submit(owner: Any, task: Callable<*>) = defaultTaskPool.submit(owner, task)
+
+    fun submit(owner: Any, task: () -> Unit) = defaultTaskPool.submit(owner, task)
+
+    fun submit(task: Callable<*>) = executor.submit(task)
+
+    fun submit(task: Runnable) = executor.submit(task)
+
+    fun submit(task: () -> Any) = executor.submit(task)
+}
+
+class TaskPool(val name: String, val parallelism: Int = (cpuNum * 2).ceilingPowerOf2()) {
+    internal val taskQueues = (1..parallelism).map { OrderedTaskQueue() }.toTypedArray()
+
+    init {
+        check(parallelism.isPowerOf2, { "`parallelism` must be power of 2" })
     }
 
     fun submit(owner: Any, task: Runnable) {
@@ -48,14 +81,22 @@ object ExecutorContext {
         taskQueues[owner.hashCode() and (taskQueues.size - 1)].offer(task)
     }
 
-    fun submit(task: Callable<*>) = executor.submit(task)
+    override fun equals(other: Any?): Boolean {
+        if (other == null) {
+            return false;
+        }
+        if (other !is TaskPool) {
+            return false
+        }
+        return this.name == other.name
+    }
 
-    fun submit(task: Runnable) = executor.submit(task)
-
-    fun submit(task: () -> Any) = executor.submit(task)
+    override fun hashCode(): Int {
+        return name.hashCode()
+    }
 }
 
-private class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*>> {
+internal class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*>> {
 
     val queue = ConcurrentLinkedQueue<Callable<*>>()
     val available = AtomicBoolean(true)

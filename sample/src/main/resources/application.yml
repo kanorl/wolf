@@ -1,0 +1,20 @@
+default: &max_conn 5000
+entity:
+  persistence:
+    interval: 60s
+  cache:
+    size: *max_conn
+    stat: true
+
+io-netty:
+  port: 5555
+#  poolSize: 8
+#  options:
+#  childOptions:
+  frameLengthMax: 1024
+  connectionsMax: *max_conn
+  codec: "string"
+
+resource:
+    reader: json
+    path: "resource"

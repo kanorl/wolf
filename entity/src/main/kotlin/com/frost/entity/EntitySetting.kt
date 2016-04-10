@@ -15,7 +15,6 @@ class EntitySetting {
     @NestedConfigurationProperty
     var id: IdSetting = IdSetting()
 
-    val persistPoolSize by lazy { persistence.poolSize }
     val persistInterval by lazy { persistence.interval }
     val cacheSize by lazy { cache.size }
     val cacheStat by lazy { cache.stat }
@@ -29,7 +28,7 @@ class CacheSetting {
 }
 
 class PersistSetting {
-    var interval = 60
+    var interval = "60s"
     var poolSize = cpuNum * 2
 }
 

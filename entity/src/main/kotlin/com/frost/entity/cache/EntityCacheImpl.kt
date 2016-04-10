@@ -2,6 +2,7 @@ package com.frost.entity.cache
 
 import com.frost.common.logging.getLogger
 import com.frost.common.scheduling.Scheduler
+import com.frost.common.time.toDuration
 import com.frost.common.toJson
 import com.frost.entity.EntitySetting
 import com.frost.entity.IEntity
@@ -16,10 +17,11 @@ import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
+import javax.annotation.PreDestroy
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val clazz: Class<E>, private val persistService: PersistService) : EntityCache<ID, E> {
+internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val clazz: Class<E>) : EntityCache<ID, E> {
     private val logger by getLogger()
 
     @Autowired
@@ -28,6 +30,8 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
     private lateinit var setting: EntitySetting
     @Autowired
     private lateinit var schduler: Scheduler
+    @Autowired
+    private lateinit var persistService: PersistService
 
     private val removing = newConcurrentHashSet<ID>()
     private val updating = ConcurrentHashMap<ID, E>()
@@ -50,10 +54,22 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
             }
         }).build(dbLoader)
 
-        val where = clazz.getAnnotation(CacheSpec::class.java).preLoad
+        val annotation = clazz.getAnnotation(CacheSpec::class.java)
+        val where = annotation.preLoad
         if (where.isNotEmpty()) {
             querier.query(clazz, where).forEach { cache.put(it.id, it) }
         }
+        val interval = if (annotation.persistInterval.isEmpty()) setting.persistInterval else annotation.persistInterval
+        schduler.scheduleWithFixedDelay(interval.toDuration(), "${clazz.simpleName} persist") { updateEdited() }
+    }
+    @PreDestroy
+    private fun preDestroy(){
+        updateEdited()
+        logger.info("Update edited {}", clazz.simpleName)
+    }
+
+    private fun updateEdited() {
+        cache.asMap().values.filter { it.edited() }.forEach { update(it) }
     }
 
     private fun cacheBuilderSpec(): CacheBuilderSpec {

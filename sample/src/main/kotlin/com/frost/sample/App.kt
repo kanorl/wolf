@@ -1,23 +1,25 @@
-
+package com.frost.sample
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ConfigurableApplicationContext
+import org.springframework.util.ResourceUtils
+import java.io.FileInputStream
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
  * @author nevermore
  */
 @SpringBootApplication(scanBasePackages = arrayOf("com.frost"))
-open class Test {
+open class App {
 
 }
 
 fun main(args: Array<String>) {
-    // -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
-    System.setProperty("Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector")
+    loadSystemProperties()
     var context: ConfigurableApplicationContext? = null
     try {
-        context = SpringApplication.run(Test::class.java)
+        context = SpringApplication.run(App::class.java)
     } catch(e: Exception) {
         System.exit(-1)
     }
@@ -28,5 +30,12 @@ fun main(args: Array<String>) {
     while (context.isActive) {
         TimeUnit.SECONDS.sleep(10)
     }
-    context.close()
+}
+
+fun loadSystemProperties(){
+    val p = Properties()
+    FileInputStream(ResourceUtils.getFile("classpath:system.properties")).use { p.load(it) }
+    for ((k, v) in p) {
+        System.setProperty(k.toString(), v.toString())
+    }
 }

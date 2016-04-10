@@ -13,6 +13,7 @@ abstract class IEntity<T : Comparable<T>> : Comparable<IEntity<T>> {
     private var editVersion = AtomicInteger(0)
 
     abstract var id: T
+        protected set
 
     final fun save(): IEntity<T> {
         editVersion.incrementAndGet()
@@ -24,7 +25,7 @@ abstract class IEntity<T : Comparable<T>> : Comparable<IEntity<T>> {
         val dbV = dbVersion.get()
         val eV = editVersion.get()
         val set = dbVersion.compareAndSet(dbV, editVersion.get())
-        check(set, {"Failed to update db version: from $dbV to $eV"})
+        check(set, { "Failed to update db version: from $dbV to $eV" })
     }
 
     final fun edited() = editVersion.get() > dbVersion.get()
