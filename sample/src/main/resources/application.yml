@@ -1,4 +1,4 @@
-default: &max_conn 5000
+default: &max_conn 10000
 entity:
   persistence:
     interval: 60s
@@ -7,14 +7,20 @@ entity:
     stat: true
 
 io-netty:
+#  host: 127.0.0.1
   port: 5555
 #  poolSize: 8
 #  options:
 #  childOptions:
   frameLengthMax: 1024
   connectionsMax: *max_conn
-  codec: "string"
+  msgNumPerSecond: 20
+  compressThreshold: 1024
+  readTimeout: 60s
+  heartbeatInterval: 60s
+  anonymousChannelCloseDelay: 30s
+  codec: string
 
 resource:
     reader: json
-    path: "resource"
+    path: resource

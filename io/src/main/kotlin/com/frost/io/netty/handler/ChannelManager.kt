@@ -5,6 +5,7 @@ import com.frost.common.event.EventBus
 import com.frost.common.logging.getLogger
 import com.frost.common.scheduling.Scheduler
 import com.frost.common.time.millis
+import com.frost.common.time.toDuration
 import com.frost.io.Identity
 import com.frost.io.netty.ChannelIdentifyTimeoutException
 import com.frost.io.netty.ChannelReplacedException
@@ -35,10 +36,10 @@ class ChannelManager : ChannelDuplexHandler() {
 
     @PostConstruct
     private fun init() {
-        val closeDelay = setting.anonymousChannelCloseDelay
-        scheduler.scheduleWithFixedDelay(closeDelay.millis(), "AnonymousChannelCleanUp"){
-            val now = System.currentTimeMillis()
-            channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay }.forEach {
+        val closeDelay = setting.anonymousChannelCloseDelay.toDuration()
+        scheduler.scheduleWithFixedDelay(closeDelay, "AnonymousChannelCleanUp"){
+            val now = millis()
+            channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay.millis }.forEach {
                 it.fireExceptionCaught(ChannelIdentifyTimeoutException)
                 it.close()
                 logger.info("Close channel due to identify timeout: {}", it)

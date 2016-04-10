@@ -1,6 +1,7 @@
 package com.frost.io.netty.server
 
 import com.frost.common.logging.getLogger
+import com.frost.common.time.toDuration
 import com.frost.io.Compressor
 import com.frost.io.netty.codec.RequestDecoder
 import com.frost.io.netty.config.SocketSetting
@@ -55,7 +56,7 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
                 .addLast("trafficController", ChannelInboundTrafficController(socketSetting.msgNumPerSecond))
                 .addLast("channelManager", channelManager)
                 .addLast("writer", writer)
-                .addLast("readTimeoutHandler", ReadTimeoutHandler(socketSetting.readTimeoutSeconds))
+                .addLast("readTimeoutHandler", ReadTimeoutHandler(socketSetting.readTimeout.toDuration().seconds.toInt()))
         interceptors.forEach { pipeline.addLast(it) }
         pipeline.addLast("handler", handler)
     }

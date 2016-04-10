@@ -8,8 +8,10 @@ import java.util.concurrent.atomic.AtomicInteger
 @CacheSpec
 abstract class IEntity<T : Comparable<T>> : Comparable<IEntity<T>> {
     @Transient
+    @kotlin.jvm.Transient
     private var dbVersion = AtomicInteger(0)
     @Transient
+    @kotlin.jvm.Transient
     private var editVersion = AtomicInteger(0)
 
     abstract var id: T
