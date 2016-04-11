@@ -1,7 +1,9 @@
 package com.frost.entity.cache
 
+import com.frost.common.lang.max
 import com.frost.common.logging.getLogger
 import com.frost.common.scheduling.Scheduler
+import com.frost.common.time.FiniteDuration
 import com.frost.common.time.toDuration
 import com.frost.common.toJson
 import com.frost.entity.EntitySetting
@@ -60,10 +62,12 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
             querier.query(clazz, where).forEach { cache.put(it.id, it) }
         }
         val interval = if (annotation.persistInterval.isEmpty()) setting.persistInterval else annotation.persistInterval
-        schduler.scheduleWithFixedDelay(interval.toDuration(), "${clazz.simpleName} persist") { updateEdited() }
+        val duration = max(interval.toDuration(), FiniteDuration("5s"))
+        schduler.scheduleWithFixedDelay(duration, "${clazz.simpleName} persist") { updateEdited() }
     }
+
     @PreDestroy
-    private fun preDestroy(){
+    private fun preDestroy() {
         updateEdited()
         logger.info("Update edited {}", clazz.simpleName)
     }
@@ -97,7 +101,7 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
                 throw IllegalStateException("${clazz.simpleName}[$id] is removed")
             }
             if (entity !== loaded) {
-                assert(entity.id === id, { "Created entity's id is missing match: expected[$id], given[${entity.id}]" })
+                assert(entity.id === id, { "Created entity's id does not match: expected[$id], given[${entity.id}]" })
                 persistService.save(entity)
             }
             entity
@@ -108,7 +112,7 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
     }
 
     override fun update(entity: E) = if (removing.contains(entity.id)) {
-        logger.error("Cannot update a removing entity [{]]", entity.toJson())
+        logger.error("Cannot update a removing entity {}[{}]", clazz.simpleName, entity.toJson())
     } else {
         persistService.update(entity)
     }

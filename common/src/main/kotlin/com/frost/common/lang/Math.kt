@@ -1,5 +1,7 @@
 package com.frost.common.lang
 
+import kotlin.comparisons.compareValues
+
 val Int.isPowerOf2: Boolean
     get() = this and (this - 1) == 0
 
@@ -26,3 +28,6 @@ val Long.isPositive: Boolean
     get() = this > 0
 val Long.isNegative: Boolean
     get() = this < 0
+
+fun <T : Comparable<*>> max(o1: T, o2: T): T = if (compareValues(o1, o2) < 0) o2 else o1
+fun <T : Comparable<*>> min(o1: T, o2: T): T = if (compareValues(o1, o2) > 0) o2 else o1

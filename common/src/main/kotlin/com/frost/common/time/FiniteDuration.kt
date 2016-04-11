@@ -3,9 +3,11 @@ package com.frost.common.time
 import com.frost.common.lang.isNegative
 import java.util.concurrent.TimeUnit
 
-data class FiniteDuration(val duration: Long, val timeUnit: TimeUnit) {
+data class FiniteDuration(val value: Long, val timeUnit: TimeUnit) : Comparable<FiniteDuration> {
+    override fun compareTo(other: FiniteDuration): Int = this.millis.compareTo(other.millis)
+
     init {
-        check(!duration.isNegative, { "`duration` must not be a negative number" })
+        check(!value.isNegative, { "`duration` must not be a negative number" })
     }
 
     companion object {
@@ -24,12 +26,13 @@ data class FiniteDuration(val duration: Long, val timeUnit: TimeUnit) {
 
     constructor(string: String) : this(parse(string))
 
-    val millis = timeUnit.toMillis(duration)
-    val seconds = timeUnit.toSeconds(duration)
-    val minutes = timeUnit.toMinutes(duration)
-    val days = timeUnit.toDays(duration)
-    val nanos = timeUnit.toNanos(duration)
-    fun sleep() = timeUnit.sleep(duration)
+    val millis = timeUnit.toMillis(value)
+    val seconds = timeUnit.toSeconds(value)
+    val minutes = timeUnit.toMinutes(value)
+    val days = timeUnit.toDays(value)
+    val nanos = timeUnit.toNanos(value)
+    fun sleep() = timeUnit.sleep(value)
+
 }
 
 fun Int.millis(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.MILLISECONDS)
@@ -39,4 +42,4 @@ fun Int.days(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.DAYS)
 
 fun String.toDuration(): FiniteDuration = FiniteDuration(this)
 
-fun sleep(duration: FiniteDuration) = duration.timeUnit.sleep(duration.duration)
+fun sleep(duration: FiniteDuration) = duration.timeUnit.sleep(duration.value)
