@@ -41,10 +41,14 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
                 ctx.writeAndFlush(Response(command, result?.value, result?.code ?: -1))
             }
         }
-        when {
-            identity != null -> ExecutorContext.submit(identity, action)
-            manager.isSync(command) -> ExecutorContext.submit(command, action)
-            else -> ExecutorContext.submit(action)
+
+        val sequenceNo = manager.sequenceNo(command)
+        if (sequenceNo != null) {
+            ExecutorContext.submit(sequenceNo, action)
+        } else if (identity != null) {
+            ExecutorContext.submit(identity, action)
+        } else {
+            ExecutorContext.submit(action)
         }
     }
 }

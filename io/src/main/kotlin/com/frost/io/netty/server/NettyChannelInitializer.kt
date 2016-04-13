@@ -1,7 +1,6 @@
 package com.frost.io.netty.server
 
 import com.frost.common.logging.getLogger
-import com.frost.common.time.toDuration
 import com.frost.io.Compressor
 import com.frost.io.netty.codec.RequestDecoder
 import com.frost.io.netty.config.SocketSetting
@@ -51,12 +50,12 @@ class NettyChannelInitializer : ChannelInitializer<SocketChannel>() {
     override fun initChannel(ch: SocketChannel) {
         val pipeline = ch.pipeline()
         filters.forEach { pipeline.addLast(it) }
-        pipeline.addLast("decoder", RequestDecoder(maxFrameLength = socketSetting.frameLengthMax, compressor = compressor))
+        pipeline.addLast("decoder", RequestDecoder(maxFrameLength = socketSetting.frameLengthMax.value, compressor = compressor))
                 .addLast("lengthPrepender", prepender)
                 .addLast("trafficController", ChannelInboundTrafficController(socketSetting.msgNumPerSecond))
                 .addLast("channelManager", channelManager)
                 .addLast("writer", writer)
-                .addLast("readTimeoutHandler", ReadTimeoutHandler(socketSetting.readTimeout.toDuration().seconds.toInt()))
+                .addLast("readTimeoutHandler", ReadTimeoutHandler(socketSetting.readTimeout.seconds.toInt()))
         interceptors.forEach { pipeline.addLast(it) }
         pipeline.addLast("handler", handler)
     }

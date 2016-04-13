@@ -1,5 +1,6 @@
 package com.frost.io.netty.handler
 
+import com.frost.common.compareTo
 import com.frost.common.lang.toByteArray
 import com.frost.common.lang.toInt
 import com.frost.common.logging.getLogger

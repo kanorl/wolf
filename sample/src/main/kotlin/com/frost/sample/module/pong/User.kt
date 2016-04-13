@@ -2,7 +2,7 @@ package com.frost.sample.module.pong
 
 import com.frost.entity.IEntity
 
-class User() : IEntity<Long>() {
+class User private constructor() : IEntity<Long>() {
     override var id: Long = 0
     var name: String = ""
     var age: Int = 0

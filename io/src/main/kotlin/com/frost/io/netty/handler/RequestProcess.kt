@@ -42,7 +42,7 @@ class RequestHandlerManager : BeanPostProcessor {
 
     private val handlers = hashMapOf<Command, RequestHandler>()
     private var commandPermission = mapOf<Command, List<Class<out Identity>>>()
-    private var syncCommands = setOf<Command>()
+    private var sequenceNo = mapOf<Command, Int>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
         return bean;
@@ -50,8 +50,8 @@ class RequestHandlerManager : BeanPostProcessor {
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         val type = bean.javaClass
-        val annotation = type.getAnnotation(Module::class.java) ?: return bean
-        val module = annotation.value;
+        val moduleAnno = type.getAnnotation(Module::class.java) ?: return bean
+        val module = moduleAnno.value;
         val classIdentities = type.getAnnotation(Identities::class.java)?.value ?: emptyArray()
         ReflectionUtils.doWithFields(type,
                 {
@@ -79,8 +79,19 @@ class RequestHandlerManager : BeanPostProcessor {
                     } else {
                         commandPermission += (command to listOf(Identity.Companion.Player::class.java))
                     }
-                    if (cmdAnno.sync) {
-                        syncCommands += command
+
+                    if (it.isAnnotationPresent(Sequential::class.java)) {
+                        it.getAnnotation(Sequential::class.java).let {
+                            if (it.enable) {
+                                sequenceNo += command to if (it.value.isEmpty()) command.hashCode() else it.value.hashCode()
+                            }
+                        }
+                    } else if (type.isAnnotationPresent(Sequential::class.java)) {
+                        type.getAnnotation(Sequential::class.java).let {
+                            if (it.enable) {
+                                sequenceNo += command to if (it.value.isEmpty()) module.toInt() else it.value.hashCode()
+                            }
+                        }
                     }
                 },
                 { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
@@ -94,7 +105,7 @@ class RequestHandlerManager : BeanPostProcessor {
         logger.error("Invoker[{}] replaced", command)
     }
 
-    fun isSync(command: Command) = syncCommands.contains(command)
+    fun sequenceNo(command: Command): Int? = sequenceNo[command]
 
     fun handler(command: Command): RequestHandler? = handlers[command];
 

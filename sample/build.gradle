@@ -1,9 +1,29 @@
 group 'com.frost'
 version '1.0-SNAPSHOT'
 
-dependencies{
+dependencies {
     compile project(':common')
     compile project(':io')
     compile project(':entity')
     compile project(':resource')
+}
+
+task copyLibs(type: Copy) {
+    from configurations.runtime
+    into "$rootDir/build/lib"
+}
+
+task copyResources(type: Copy) {
+    from "$buildDir/resources/main"
+    into "$rootDir/build/resources"
+}
+
+jar {
+    archiveName = "sample.jar"
+    destinationDir = file("$rootDir/build")
+    dependsOn copyLibs, copyResources
+}
+
+clean {
+    delete += "$rootDir/build"
 }

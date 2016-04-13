@@ -12,10 +12,10 @@ io-netty:
 #  poolSize: 8
 #  options:
 #  childOptions:
-  frameLengthMax: 1024
+  frameLengthMax: 1k
   connectionsMax: *max_conn
   msgNumPerSecond: 20
-  compressThreshold: 1024
+  compressThreshold: 1k
   readTimeout: 60s
   heartbeatInterval: 60s
   anonymousChannelCloseDelay: 30s

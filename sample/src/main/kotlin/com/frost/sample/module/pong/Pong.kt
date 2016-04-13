@@ -20,10 +20,6 @@ import javax.annotation.PostConstruct
 class Pong {
     val logger by getLogger()
 
-    init {
-        println("fdasfdsafasdfas")
-    }
-
     @Autowired
     private lateinit var ctx: ConfigurableApplicationContext
     @Autowired
@@ -31,7 +27,7 @@ class Pong {
 
     @PostConstruct
     fun init() {
-        scheduler.scheduleOnce(10.seconds(), "close") { ctx.close() }
+        scheduler.scheduleOnce(60.seconds(), "close") { ctx.close() }
     }
 
     private lateinit var users: EntityCache<Long, User>

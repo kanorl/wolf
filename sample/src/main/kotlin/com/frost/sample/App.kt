@@ -1,4 +1,5 @@
 package com.frost.sample
+
 import org.springframework.boot.SpringApplication
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.context.ConfigurableApplicationContext
@@ -17,14 +18,14 @@ open class App {
 
 fun main(args: Array<String>) {
     loadSystemProperties()
-    var context: ConfigurableApplicationContext? = null
+    val context: ConfigurableApplicationContext
     try {
         context = SpringApplication.run(App::class.java)
     } catch(e: Exception) {
-        System.exit(-1)
+        throw e
     }
 
-    context!!.registerShutdownHook()
+    context.registerShutdownHook()
     context.start()
 
     while (context.isActive) {
@@ -32,7 +33,7 @@ fun main(args: Array<String>) {
     }
 }
 
-fun loadSystemProperties(){
+fun loadSystemProperties() {
     val p = Properties()
     FileInputStream(ResourceUtils.getFile("classpath:system.properties")).use { p.load(it) }
     for ((k, v) in p) {

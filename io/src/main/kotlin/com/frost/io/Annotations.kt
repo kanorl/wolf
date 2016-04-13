@@ -13,8 +13,12 @@ annotation class Module(val value: Short)
 
 @Retention(RUNTIME)
 @Target(FIELD)
-annotation class Cmd(val value: Byte, val sync: Boolean = false)
+annotation class Cmd(val value: Byte)
 
 @Retention(RUNTIME)
 @Target(FIELD, CLASS)
 annotation class Identities(val value: Array<KClass<out Identity>>)
+
+@Retention(RUNTIME)
+@Target(FIELD, CLASS)
+annotation class Sequential(val value: String = "", val enable: Boolean = true)

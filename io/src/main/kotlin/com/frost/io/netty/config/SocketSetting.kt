@@ -1,6 +1,8 @@
 package com.frost.io.netty.config
 
+import com.frost.common.Bytes
 import com.frost.common.lang.settingToString
+import com.frost.common.time.FiniteDuration
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 
@@ -11,14 +13,14 @@ class SocketSetting {
     var port = 0
     var options: Map<String, Any> = hashMapOf()
     var childOptions: Map<String, Any> = hashMapOf()
-    var frameLengthMax = 1024
+    lateinit var frameLengthMax: Bytes
     var connectionsMax = 5000
-    var msgNumPerSecond: Int = 0
-    var compressThreshold: Int = 0
+    var msgNumPerSecond = 20
+    lateinit var compressThreshold: Bytes
     var whiteList = emptyArray<String>()
-    var readTimeout = "60s"
-    var heartbeatInterval = "60s"
-    var anonymousChannelCloseDelay = "30s"
+    lateinit var readTimeout: FiniteDuration
+    lateinit var heartbeatInterval: FiniteDuration
+    lateinit var anonymousChannelCloseDelay: FiniteDuration
     var codec = ""
 
     override fun toString(): String {
