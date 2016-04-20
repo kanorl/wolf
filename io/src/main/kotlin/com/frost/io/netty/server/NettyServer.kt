@@ -49,7 +49,6 @@ class NettyServer : ApplicationListener<ContextStartedEvent>, Lifecycle {
                     .channelFactory(ChannelFactory<ServerSocketChannel> {
                         if (Epoll.isAvailable()) EpollServerSocketChannel() else NioServerSocketChannel()
                     })
-                    .childHandler(channelInitializer)
 
             socketSetting.options.map { transfer(it) }.forEach { b.option(it.first, it.second) }
             socketSetting.childOptions.map { transfer(it) }.forEach { b.childOption(it.first, it.second) }

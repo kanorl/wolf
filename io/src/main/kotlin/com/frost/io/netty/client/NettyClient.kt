@@ -1,7 +1,7 @@
 package com.frost.io.netty.client
 
 import com.frost.common.logging.getLogger
-import com.frost.common.time.seconds
+import com.frost.common.time.millis
 import com.frost.io.Command
 import com.frost.io.Request
 import io.netty.bootstrap.Bootstrap
@@ -45,10 +45,10 @@ class NettyClient {
             return
         }
         synchronized(this) {
-            if (System.currentTimeMillis() - lastConnectTime < reconnectInterval) {
+            if (millis() - lastConnectTime < reconnectInterval) {
                 return;
             }
-            lastConnectTime = System.currentTimeMillis()
+            lastConnectTime = millis()
         }
 
         try {
@@ -93,11 +93,11 @@ fun main(args: Array<String>) {
     val eventLoopGroup = NioEventLoopGroup(8)
 //    val client = NettyClient(port = 5555, eventLoopGroup = eventLoopGroup)
 //    client.connect()
-        for (i in 1..1000) {
+        for (i in 1..10) {
             val client = NettyClient(port = 5555, eventLoopGroup = eventLoopGroup)
             client.scheduleAtFixedRate(1000 / 50) {
                     client.write(Command(1, 1), "ping-" + a.andIncrement)
             }
         }
-    10.seconds().sleep()
+//    10.seconds().sleep()
 }

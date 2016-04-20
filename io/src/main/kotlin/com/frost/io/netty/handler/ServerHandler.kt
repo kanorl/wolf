@@ -17,6 +17,8 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
 
     @Autowired
     private lateinit var manager: RequestHandlerManager
+    @Autowired
+    private lateinit var executorContext: ExecutorContext
 
     override fun channelRead0(ctx: ChannelHandlerContext, request: Request<ByteArray>) {
         val identity = ctx.identity()
@@ -44,11 +46,11 @@ class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
 
         val sequenceNo = manager.sequenceNo(command)
         if (sequenceNo != null) {
-            ExecutorContext.submit(sequenceNo, action)
+            executorContext.submit(sequenceNo, action)
         } else if (identity != null) {
-            ExecutorContext.submit(identity, action)
+            executorContext.submit(identity, action)
         } else {
-            ExecutorContext.submit(action)
+            executorContext.submit(action)
         }
     }
 }

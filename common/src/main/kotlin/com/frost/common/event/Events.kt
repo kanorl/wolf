@@ -16,7 +16,7 @@ import org.springframework.util.ReflectionUtils
 
 interface Event
 
-interface IdentifiedEvent: Event, Identified<Any>
+interface IdentifiedEvent : Event, Identified<Any>
 
 @Suppress("UNCHECKED_CAST")
 @Component
@@ -56,13 +56,15 @@ class EventBus {
 
     @Autowired
     private lateinit var listenerManager: EventListenerManager
+    @Autowired
+    private lateinit var executor: ExecutorContext
 
     fun post(event: Event) {
         listenerManager.getListeners(event.javaClass).forEach { listener ->
-            if(event is IdentifiedEvent){
-                ExecutorContext.submit(event.id){ listener.onEvent(event) }
-            }else{
-                ExecutorContext.submit{ listener.onEvent(event) }
+            if (event is IdentifiedEvent) {
+                executor.submit(event.id) { listener.onEvent(event) }
+            } else {
+                executor.submit { listener.onEvent(event) }
             }
         }
     }

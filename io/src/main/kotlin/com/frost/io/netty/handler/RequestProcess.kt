@@ -80,17 +80,13 @@ class RequestHandlerManager : BeanPostProcessor {
                         commandPermission += (command to listOf(Identity.Companion.Player::class.java))
                     }
 
-                    if (it.isAnnotationPresent(Sequential::class.java)) {
-                        it.getAnnotation(Sequential::class.java).let {
-                            if (it.enable) {
-                                sequenceNo += command to if (it.value.isEmpty()) command.hashCode() else it.value.hashCode()
-                            }
+                    if (it.isAnnotationPresent(Sync::class.java)) {
+                        it.getAnnotation(Sync::class.java).let {
+                            sequenceNo += command to if (it.value.isEmpty()) command.hashCode() else it.value.hashCode()
                         }
-                    } else if (type.isAnnotationPresent(Sequential::class.java)) {
-                        type.getAnnotation(Sequential::class.java).let {
-                            if (it.enable) {
-                                sequenceNo += command to if (it.value.isEmpty()) module.toInt() else it.value.hashCode()
-                            }
+                    } else if (!it.isAnnotationPresent(Async::class.java) && type.isAnnotationPresent(Sync::class.java)) {
+                        type.getAnnotation(Sync::class.java).let {
+                            sequenceNo += command to if (it.value.isEmpty()) module.toInt() else it.value.hashCode()
                         }
                     }
                 },

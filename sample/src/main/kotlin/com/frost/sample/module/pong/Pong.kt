@@ -2,12 +2,9 @@ package com.frost.sample.module.pong
 
 import com.frost.common.logging.getLogger
 import com.frost.common.scheduling.Scheduler
-import com.frost.common.time.seconds
+import com.frost.common.time.minutes
 import com.frost.entity.cache.EntityCache
-import com.frost.io.Cmd
-import com.frost.io.Identities
-import com.frost.io.Identity
-import com.frost.io.Module
+import com.frost.io.*
 import com.frost.io.netty.handler.Result
 import com.frost.io.netty.handler.success
 import org.springframework.beans.factory.annotation.Autowired
@@ -27,18 +24,22 @@ class Pong {
 
     @PostConstruct
     fun init() {
-        scheduler.scheduleOnce(60.seconds(), "close") { ctx.close() }
+        scheduler.scheduleOnce(5.minutes(), "close") { ctx.close() }
     }
 
     private lateinit var users: EntityCache<Long, User>
 
     private val counter = AtomicInteger()
+    private var n = 0
 
     @Cmd(1)
+    @Sync
     val pong: (String) -> Result<String> = {
-        logger.info(it)
+        n++
+        val increment = counter.incrementAndGet()
+        logger.info(it + "-" + n + "-" + increment)
 
-        val id = counter.andIncrement % 1000L
+        val id = increment % 1000L
         val user = users.getOrCreate(id, { User(id, id.toString(), 10) })
         user.age = counter.get()
         user.save()

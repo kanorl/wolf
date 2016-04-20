@@ -21,4 +21,8 @@ annotation class Identities(val value: Array<KClass<out Identity>>)
 
 @Retention(RUNTIME)
 @Target(FIELD, CLASS)
-annotation class Sequential(val value: String = "", val enable: Boolean = true)
+annotation class Sync(val value: String = "")
+
+@Retention(RUNTIME)
+@Target(FIELD, CLASS)
+annotation class Async()

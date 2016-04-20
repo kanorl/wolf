@@ -19,8 +19,7 @@ class SocketSetting {
     lateinit var compressThreshold: Bytes
     var whiteList = emptyArray<String>()
     lateinit var readTimeout: FiniteDuration
-    lateinit var heartbeatInterval: FiniteDuration
-    lateinit var anonymousChannelCloseDelay: FiniteDuration
+    lateinit var identifyTimeout: FiniteDuration
     var codec = ""
 
     override fun toString(): String {

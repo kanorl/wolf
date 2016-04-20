@@ -10,6 +10,7 @@ import com.fasterxml.jackson.datatype.guava.GuavaModule
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.frost.common.logging.defaultLogger
 
 val jacksonObjectMapper = run {
     val mapper = jacksonObjectMapper()
@@ -44,6 +45,18 @@ fun <T : Any> T.toJsonBytes(): ByteArray = jacksonObjectMapper.writeValueAsBytes
  * deserialize Json String as T
  *
  * @return T
- * @throws Exception
+ * @throws Exception if deserialize failed
  */
 inline fun <reified T : Any> String.toObj(): T = jacksonObjectMapper.readValue(this, object : TypeReference<T>() {})
+
+/**
+ * deserialize Json String as T
+ *
+ * @return T or null if exception occurred
+ */
+inline fun <reified T : Any> String.toObjOrNull(): T? = try {
+    jacksonObjectMapper.readValue(this, object : TypeReference<T>() {})
+} catch(e: Exception) {
+    defaultLogger.error(e.message, e)
+    null
+}

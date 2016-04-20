@@ -18,3 +18,5 @@ fun <T : Any> unwrapCompanionClass(javaClass: Class<T>): Class<*> {
 }
 
 fun String.loggingFormat(vararg args: Any): String = if (args.isEmpty()) this else MessageFormatter.arrayFormat(this, args).message
+
+val defaultLogger = LoggerFactory.getLogger("default")

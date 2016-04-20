@@ -1,6 +1,7 @@
 package com.frost.entity.db
 
 import com.frost.common.concurrent.ExecutorContext
+import com.frost.common.concurrent.TaskPool
 import com.frost.entity.IEntity
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
@@ -20,9 +21,14 @@ internal class PersistServiceImpl : PersistService {
 
     @Autowired
     private lateinit var persistence: Persistence
+    @Autowired
+    private lateinit var executorContext: ExecutorContext
+
+    private lateinit var taskPool: TaskPool
 
     @PostConstruct
     private fun init() {
+        taskPool = executorContext.createTaskPool("persist")
     }
 
     override fun save(entity: IEntity<*>, callback: (() -> Unit)?) {
@@ -35,10 +41,6 @@ internal class PersistServiceImpl : PersistService {
 
     override fun remove(entity: IEntity<*>, callback: (() -> Unit)?) {
         submit(PersistTask.removeTask(persistence, entity, callback))
-    }
-
-    companion object {
-        val taskPool = ExecutorContext.createTaskPool("persist")
     }
 
     internal fun submit(task: PersistTask) {

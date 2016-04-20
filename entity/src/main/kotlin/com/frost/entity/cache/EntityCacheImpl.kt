@@ -3,7 +3,7 @@ package com.frost.entity.cache
 import com.frost.common.lang.max
 import com.frost.common.logging.getLogger
 import com.frost.common.scheduling.Scheduler
-import com.frost.common.time.FiniteDuration
+import com.frost.common.time.seconds
 import com.frost.common.time.toDuration
 import com.frost.common.toJson
 import com.frost.entity.EntitySetting
@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.PostConstruct
-import javax.annotation.PreDestroy
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -31,7 +30,7 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
     @Autowired
     private lateinit var setting: EntitySetting
     @Autowired
-    private lateinit var schduler: Scheduler
+    private lateinit var scheduler: Scheduler
     @Autowired
     private lateinit var persistService: PersistService
 
@@ -62,17 +61,11 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
             querier.query(clazz, where).forEach { cache.put(it.id, it) }
         }
         val interval = if (annotation.persistInterval.isEmpty()) setting.persistInterval else annotation.persistInterval
-        val duration = max(interval.toDuration(), FiniteDuration("5s"))
-        schduler.scheduleWithFixedDelay(duration, "${clazz.simpleName} persist") { updateEdited() }
+        val duration = max(interval.toDuration(), 5.seconds())
+        scheduler.scheduleWithFixedDelay(duration, "${clazz.simpleName} persist") { updateEdited() }
     }
 
-    @PreDestroy
-    private fun preDestroy() {
-        updateEdited()
-        logger.info("Update edited {}", clazz.simpleName)
-    }
-
-    private fun updateEdited() {
+    fun updateEdited() {
         cache.asMap().values.filter { it.edited() }.forEach { update(it) }
     }
 
@@ -101,7 +94,7 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
                 throw IllegalStateException("${clazz.simpleName}[$id] is removed")
             }
             if (entity !== loaded) {
-                assert(entity.id === id, { "Created entity's id does not match: expected[$id], given[${entity.id}]" })
+                check(entity.id === id, { "Created entity's id does not match: expected[$id], given[${entity.id}]" })
                 persistService.save(entity)
             }
             entity
@@ -118,6 +111,6 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
     }
 
     override fun remove(id: ID) {
-        get(id)?.let { cache.invalidate(it) }
+        get(id)?.let { cache.invalidate(it.id) }
     }
 }

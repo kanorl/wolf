@@ -72,7 +72,7 @@ object ProtostuffCodec : Codec {
     override fun encode(obj: Any?): ByteArray {
         obj ?: return emptyByteArray
         val schema = RuntimeSchema.getSchema(obj.javaClass)
-        return ProtostuffIOUtil.toByteArray(obj, schema, LinkedBuffer.allocate(LinkedBuffer.MIN_BUFFER_SIZE))
+        return ProtostuffIOUtil.toByteArray(obj, schema, LinkedBuffer.allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE))
     }
 
     override fun <T> decode(data: ByteArray, type: Class<T>): T {
@@ -88,7 +88,7 @@ object ProtostuffProtoBufCodec : Codec {
     override fun encode(obj: Any?): ByteArray {
         obj ?: return emptyByteArray
         val schema = RuntimeSchema.getSchema(obj.javaClass)
-        return ProtobufIOUtil.toByteArray(obj, schema, LinkedBuffer.allocate(LinkedBuffer.MIN_BUFFER_SIZE))
+        return ProtobufIOUtil.toByteArray(obj, schema, LinkedBuffer.allocate(LinkedBuffer.DEFAULT_BUFFER_SIZE))
     }
 
     override fun <T> decode(data: ByteArray, type: Class<T>): T {

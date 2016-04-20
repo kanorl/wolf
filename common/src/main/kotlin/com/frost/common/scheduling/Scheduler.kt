@@ -46,35 +46,37 @@ interface Scheduler {
 internal class DelegatingScheduler : Scheduler {
     @Autowired
     private lateinit var delegate: MillisBasedTaskScheduler
+    @Autowired
+    private lateinit var executorContext: ExecutorContext
 
     override fun schedule(cron: String, task: NamedRunnable): ScheduledFuture<*> =
-            delegate.schedule(LoggingRunnable(task), CronTrigger(cron))
+            delegate.schedule(LoggingRunnable(task, executorContext), CronTrigger(cron))
 
     override fun schedule(cron: String, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.schedule(LoggingRunnable(toNamedTask(taskName, task)), CronTrigger(cron))
+            delegate.schedule(LoggingRunnable(toNamedTask(taskName, task), executorContext), CronTrigger(cron))
 
     override fun scheduleOnce(startTime: LocalDateTime, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.schedule(LoggingRunnable(toNamedTask(taskName, task)), startTime.toDate())
+            delegate.schedule(LoggingRunnable(toNamedTask(taskName, task), executorContext), startTime.toDate())
 
     override fun scheduleOnce(delay: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduledExecutor.schedule(LoggingRunnable(toNamedTask(taskName, task)), delay.value, delay.timeUnit)
+            delegate.scheduledExecutor.schedule(LoggingRunnable(toNamedTask(taskName, task), executorContext), delay.value, delay.timeUnit)
 
     override fun scheduleAtFixedRate(period: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduledExecutor.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task)), 0, period.value, period.timeUnit)
+            delegate.scheduledExecutor.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task), executorContext), 0, period.value, period.timeUnit)
 
     override fun scheduleAtFixedRate(startTime: LocalDateTime, period: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task)), startTime.toDate(), period.millis)
+            delegate.scheduleAtFixedRate(LoggingRunnable(toNamedTask(taskName, task), executorContext), startTime.toDate(), period.millis)
 
     override fun scheduleWithFixedDelay(delay: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduledExecutor.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task)), 0, delay.value, delay.timeUnit)
+            delegate.scheduledExecutor.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task), executorContext), 0, delay.value, delay.timeUnit)
 
     override fun scheduleWithFixedDelay(startTime: LocalDateTime, delay: FiniteDuration, taskName: String, task: () -> Unit): ScheduledFuture<*> =
-            delegate.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task)), startTime.toDate(), delay.millis)
+            delegate.scheduleWithFixedDelay(LoggingRunnable(toNamedTask(taskName, task), executorContext), startTime.toDate(), delay.millis)
 
     private fun toNamedTask(name: String, task: () -> Unit): NamedRunnable = namedTask(name, task)
 }
 
-private class LoggingRunnable(val delegate: Runnable) : Runnable {
+private class LoggingRunnable(val delegate: Runnable, val executorContext: ExecutorContext) : Runnable {
     val logger by getLogger()
 
     val action = {
@@ -90,9 +92,9 @@ private class LoggingRunnable(val delegate: Runnable) : Runnable {
 
     override fun run() {
         if (delegate is Identified<*>) {
-            ExecutorContext.submit(delegate.id, action)
+            executorContext.submit(delegate.id, action)
         } else {
-            ExecutorContext.submit(action)
+            executorContext.submit(action)
         }
     }
 }

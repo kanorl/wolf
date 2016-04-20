@@ -5,38 +5,62 @@ import com.frost.common.lang.isPowerOf2
 import com.frost.common.logging.getLogger
 import com.frost.common.time.millis
 import com.google.common.util.concurrent.MoreExecutors
+import org.springframework.stereotype.Component
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
+import javax.annotation.PreDestroy
 
 val cpuNum = Runtime.getRuntime().availableProcessors()
 
-object ExecutorContext {
+@Component
+class ExecutorContext {
     private val logger by getLogger()
     val parallelism: Int = (cpuNum * 2).ceilingPowerOf2()
     private var taskPools = arrayOf<TaskPool>()
     val defaultTaskPool = createTaskPool("default")
     private val executor = ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
-    private val transferer = Executors.newSingleThreadExecutor(NamedThreadFactory(name = "task-transferer", daemon = true))
+    private val transferer = Executors.newSingleThreadExecutor(NamedThreadFactory(name = "task-transferer"))
+    @Volatile
+    private var shutdown = false
 
     init {
         transferer.submit {
             val parkNanos = 5.millis().nanos
             while (true) {
                 var park = true
-                for (taskPool in taskPools) {
+                val pools = taskPools
+                for (taskPool in pools) {
                     for (queue in taskPool.taskQueues) {
                         queue.poll()?.let {
-                            executor.submit(it)
+                            try {
+                                executor.submit(it)
+                            } catch(e: Exception) {
+                                logger.error("Transferer failed to submit task to the executor", e)
+                            }
                             park = false
                         }
                     }
                 }
                 if (park) {
+                    if (shutdown) {
+                        break
+                    }
                     LockSupport.parkNanos(parkNanos)
                 }
             }
+        }
+    }
+
+    @PreDestroy
+    private fun shutdown() {
+        shutdown = true
+        transferer.shutdownAndAwaitTermination()
+        if (!executor.awaitQuiescence(1, TimeUnit.MINUTES)) {
+            logger.error("ExecutorContext waiting quiescence timeout")
+        } else {
+            logger.info("ExecutorContext terminated")
         }
     }
 
@@ -55,11 +79,23 @@ object ExecutorContext {
 
     fun submit(owner: Any, task: () -> Unit) = defaultTaskPool.submit(owner, task)
 
-    fun submit(task: Callable<*>) = executor.submit(task)
+    fun submit(task: Callable<*>) = try {
+        executor.submit(task)
+    } catch(e: Exception) {
+        logger.error("Failed to submit task to the executor", e)
+    }
 
-    fun submit(task: Runnable) = executor.submit(task)
+    fun submit(task: Runnable) = try {
+        executor.submit(task)
+    } catch(e: Exception) {
+        logger.error("Failed to submit task to the executor", e)
+    }
 
-    fun submit(task: () -> Any) = executor.submit(task)
+    fun submit(task: () -> Any) = try {
+        executor.submit(task)
+    } catch(e: Exception) {
+        logger.error("Failed to submit task to the executor", e)
+    }
 }
 
 class TaskPool(val name: String, val parallelism: Int = (cpuNum * 2).ceilingPowerOf2()) {
@@ -79,6 +115,10 @@ class TaskPool(val name: String, val parallelism: Int = (cpuNum * 2).ceilingPowe
 
     fun submit(owner: Any, task: () -> Unit) {
         taskQueues[owner.hashCode() and (taskQueues.size - 1)].offer(task)
+    }
+
+    internal fun isEmpty(): Boolean {
+        return taskQueues.all { it.isEmpty() }
     }
 
     override fun equals(other: Any?): Boolean {

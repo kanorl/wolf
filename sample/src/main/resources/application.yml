@@ -9,17 +9,16 @@ entity:
 io-netty:
 #  host: 127.0.0.1
   port: 5555
-#  poolSize: 8
 #  options:
 #  childOptions:
   frameLengthMax: 1k
   connectionsMax: *max_conn
-  msgNumPerSecond: 20
+  msgNumPerSecond: 50
   compressThreshold: 1k
   readTimeout: 60s
-  heartbeatInterval: 60s
-  anonymousChannelCloseDelay: 30s
+  identifyTimeout: 30s
   codec: string
+  whiteList: ["192.168.*.*"]
 
 resource:
     reader: json

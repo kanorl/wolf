@@ -35,8 +35,8 @@ class ChannelManager : ChannelDuplexHandler() {
 
     @PostConstruct
     private fun init() {
-        val closeDelay = setting.anonymousChannelCloseDelay
-        scheduler.scheduleWithFixedDelay(closeDelay, "AnonymousChannelCleanUp"){
+        val closeDelay = setting.identifyTimeout
+        scheduler.scheduleWithFixedDelay(closeDelay, "AnonymousChannelCleanUp") {
             val now = millis()
             channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay.millis }.forEach {
                 it.fireExceptionCaught(ChannelIdentifyTimeoutException)
@@ -58,7 +58,7 @@ class ChannelManager : ChannelDuplexHandler() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         val channel = ctx.channel()
-        ctx.attr(createTimeKey).setIfAbsent(System.currentTimeMillis())
+        ctx.attr(createTimeKey).setIfAbsent(millis())
         val prev = channelGroup.putIfAbsent(ctx.channel().id(), ctx)
         check(prev == null, { "Duplicate channel id: ${channel.id()}.(should never happen)" })
         channel.closeFuture().addListener(remover)
@@ -66,15 +66,18 @@ class ChannelManager : ChannelDuplexHandler() {
     }
 
     fun bind(channelId: ChannelId, identity: Identity) {
-        val channel = channelGroup[channelId] ?: return
-        channel.identity(identity)
+        val channel = checkNotNull(channelGroup[channelId], { "Bind failed: Channel not exists" })
 
         val group = identifiedChannelGroups.computeIfAbsent(identity.javaClass, { ConcurrentHashMap<Identity, ChannelHandlerContext>() })
-        val prev = group.putIfAbsent(identity, channel)
-        prev?.let {
+        val removed = group.remove(identity)
+        removed?.let {
+            it.attr(identityKey).remove()
             it.fireExceptionCaught(ChannelReplacedException)
             it.close()
         }
+        channel.identity(identity)
+        val prev = group.putIfAbsent(identity, channel)
+        check(prev == null, { "Replace channel failed" })
         eventBus.post(ChannelBindEvent(identity, prev != null))
     }
 

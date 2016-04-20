@@ -9,6 +9,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
+import javax.annotation.PreDestroy
 
 @Suppress("UNCHECKED_CAST")
 @Component
@@ -21,7 +22,7 @@ class EntityCacheManager : BeanPostProcessor {
     @Autowired
     private lateinit var setting: EntitySetting
 
-    private var entityCaches = hashMapOf<Class<*>, Any>()
+    private var entityCaches = hashMapOf<Class<*>, EntityCacheImpl<*, *>>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? = bean
 
@@ -35,5 +36,10 @@ class EntityCacheManager : BeanPostProcessor {
                 { EntityCache::class.java.isAssignableFrom(it.type) }
         )
         return bean;
+    }
+
+    @PreDestroy
+    private fun destroy() {
+        entityCaches.values.forEach { it.updateEdited() }
     }
 }
