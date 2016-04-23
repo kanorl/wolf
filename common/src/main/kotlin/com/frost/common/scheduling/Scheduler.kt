@@ -20,10 +20,9 @@ import java.util.concurrent.ThreadFactory
 internal class MillisBasedTaskScheduler : ThreadPoolTaskScheduler() {
     val log by getLogger()
 
-    val handler = RejectedExecutionHandler2 { runnable, executor ->
-        if (!executor.isShutdown) {
-            log.error("Task[{}] rejected from[{}]", runnable, executor)
-        }
+    @Autowired(required = false)
+    private var handler: RejectedExecutionHandler2 = RejectedExecutionHandler2 { runnable, executor ->
+        log.error("Task[{}] rejected from[{}]", runnable, executor)
     }
 
     override fun createExecutor(poolSize: Int, threadFactory: ThreadFactory?, rejectedExecutionHandler: RejectedExecutionHandler?): ScheduledExecutorService? {

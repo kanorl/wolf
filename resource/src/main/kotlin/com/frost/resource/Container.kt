@@ -1,6 +1,6 @@
 package com.frost.resource
 
-import com.frost.common.random
+import com.frost.common.lang.random
 import com.frost.resource.validation.DuplicateResourceException
 import java.util.*
 

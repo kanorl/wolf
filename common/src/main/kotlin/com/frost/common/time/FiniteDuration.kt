@@ -41,5 +41,3 @@ fun Int.minutes(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.MINUT
 fun Int.days(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.DAYS)
 
 fun String.toDuration(): FiniteDuration = FiniteDuration(this)
-
-fun sleep(duration: FiniteDuration) = duration.timeUnit.sleep(duration.value)

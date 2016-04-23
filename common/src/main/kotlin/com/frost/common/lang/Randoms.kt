@@ -1,4 +1,4 @@
-package com.frost.common
+package com.frost.common.lang
 
 import java.util.concurrent.ThreadLocalRandom
 
