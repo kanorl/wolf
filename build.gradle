@@ -1,4 +1,4 @@
-group 'com.frost'
+group 'com.frostwolf'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
@@ -8,7 +8,6 @@ buildscript {
     ext.kotlin_version = '1.0.1-1'
     ext.spring_boot_version = '1.3.3.RELEASE'
     repositories {
-        maven { url 'http://maven.oschina.net/content/groups/public/' }
         mavenCentral()
     }
     dependencies {
@@ -33,6 +32,7 @@ ext {
     jackson_version = '2.7.2'
     mongo_version = '3.2.2'
     disruptor_version = '3.3.4'
+    gs_collections_version = '7.0.3'
 }
 
 ext {
@@ -79,6 +79,11 @@ ext {
             "io.protostuff:protostuff-runtime:$protostuff_version"
     ]
     disruptor = "com.lmax:disruptor:$disruptor_version"
+    gs_collections = [
+            "com.goldmansachs:gs-collections-api:$gs_collections_version",
+            "com.goldmansachs:gs-collections:$gs_collections_version",
+            "com.goldmansachs:gs-collections-forkjoin:$gs_collections_version"
+    ]
 }
 
 allprojects {
@@ -90,7 +95,6 @@ allprojects {
     targetCompatibility = 1.8
 
     repositories {
-        maven { url 'http://maven.oschina.net/content/groups/public/' }
         mavenCentral()
     }
 
@@ -103,6 +107,7 @@ allprojects {
         compile reflections
         compile jackson
         compile disruptor
+        compile gs_collections
     }
     configurations {
         all*.exclude group: "ch.qos.logback"
