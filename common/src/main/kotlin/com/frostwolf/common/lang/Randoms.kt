@@ -15,17 +15,15 @@ fun nextBoolean(): Boolean = current().nextBoolean()
 fun <E : Any> Collection<E>.random(totalWeight: Int? = null, randomByIndexOnFail: Boolean = true, weigher: (E) -> Int): E? {
     if (this.isEmpty()) return null
     val total = totalWeight ?: this.sumBy { t -> weigher(t) }
-    var result: E? = null
     if (total > 0) {
         var random = nextInt(total)
         for (t in this) {
             val weigh = weigher(t)
             if (weigh > random) {
-                result = t
-                break
+                return t
             }
             random -= weigh
         }
     }
-    return result ?: if (randomByIndexOnFail) this.elementAt(nextInt(this.size)) else null
+    return if (randomByIndexOnFail) this.elementAt(nextInt(this.size)) else null
 }

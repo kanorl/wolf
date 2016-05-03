@@ -11,13 +11,17 @@ sealed class Identity {
 
     class Player(override val value: Long) : Identity()
 
-    class GM(override val value: Long = generator.incrementAndGet()) : Identity() {
+    class GM : Identity() {
+        override val value: Long = generator.incrementAndGet()
+
         companion object {
             private val generator = AtomicLong()
         }
     }
 
-    class RemoteServer(override val value: Long = generator.incrementAndGet()) : Identity() {
+    class RemoteServer : Identity() {
+        override val value: Long = generator.incrementAndGet()
+
         companion object {
             private val generator = AtomicLong()
         }

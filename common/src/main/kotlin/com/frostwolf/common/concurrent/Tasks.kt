@@ -1,24 +1,20 @@
 package com.frostwolf.common.concurrent
 
 import com.frostwolf.common.Identified
-import java.util.concurrent.Callable
+import com.frostwolf.common.Named
 
-interface NamedRunnable : Runnable {
-     val name: String
-}
+fun task(id: Any? = null, name: String, action: () -> Unit): Runnable =
+        if (id == null) {
+            object : Runnable, Named {
+                override val name: String = name
 
-inline fun namedTask(name: String, crossinline op: () -> Unit): NamedRunnable = object : NamedRunnable {
-    override val name: String = name
+                override fun run() = action()
+            }
+        } else {
+            object : Runnable, Named, Identified<Any> {
+                override val id: Any = id
+                override val name: String = name
 
-    override fun run() = op()
-}
-
-interface IdentifiedRunnable : Runnable, Identified<Any>
-
-interface IdentifiedCallable<V> : Callable<V>, Identified<Any>
-
-fun <T> identifiedTask(id: Any, op: () -> T): IdentifiedCallable<T> = object : IdentifiedCallable<T> {
-    override fun call() = op()
-
-    override val id = id
-}
+                override fun run() = action()
+            }
+        }

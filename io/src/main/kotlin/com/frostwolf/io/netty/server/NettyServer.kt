@@ -17,13 +17,14 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationListener
-import org.springframework.context.Lifecycle
+import org.springframework.context.event.ApplicationContextEvent
+import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.ContextStartedEvent
 import org.springframework.stereotype.Component
 import java.lang.reflect.Field
 
 @Component
-class NettyServer : ApplicationListener<ContextStartedEvent>, Lifecycle {
+class NettyServer : ApplicationListener<ApplicationContextEvent> {
     val logger by getLogger()
 
     @Autowired
@@ -36,11 +37,15 @@ class NettyServer : ApplicationListener<ContextStartedEvent>, Lifecycle {
 
     private fun eventLoopGroup(nThread: Int = 0, factory: NamedThreadFactory): EventLoopGroup = if (Epoll.isAvailable()) EpollEventLoopGroup(nThread, factory) else NioEventLoopGroup(nThread, factory)
 
-    override fun onApplicationEvent(event: ContextStartedEvent?) {
-        start0()
+    override fun onApplicationEvent(event: ApplicationContextEvent) {
+        when (event) {
+            is ContextStartedEvent -> start()
+            is ContextClosedEvent -> stop()
+        }
     }
 
-    private fun start0() {
+    @Synchronized
+    private fun start() {
         logger.info("Socket server is starting.\n $socketSetting")
         try {
             val b = ServerBootstrap()
@@ -53,16 +58,12 @@ class NettyServer : ApplicationListener<ContextStartedEvent>, Lifecycle {
             socketSetting.options.map { transfer(it) }.forEach { b.option(it.first, it.second) }
             socketSetting.childOptions.map { transfer(it) }.forEach { b.childOption(it.first, it.second) }
 
-            b.bind(socketSetting.host, socketSetting.port).syncUninterruptibly()
-
-            logger.error("Socket server started, listening on ${socketSetting.host}:${socketSetting.port}")
+            b.bind(socketSetting.host, socketSetting.port).sync()
         } catch(e: Exception) {
             logger.error("Socket server starts failed", e)
             throw e
         }
-    }
-
-    override fun start() {
+        logger.info("Socket server started, listening on ${socketSetting.host}:${socketSetting.port}")
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -74,14 +75,13 @@ class NettyServer : ApplicationListener<ContextStartedEvent>, Lifecycle {
             throw IllegalArgumentException("Unsupported socket option [${it.key}]")
         }
         val key = field.get(null) as ChannelOption<Any>
-        Pair(key, it.value)
+        key to it.value
     }
 
-    override fun isRunning(): Boolean = !(parentGroup.isShutdown && childGroup.isShutdown)
-
-    override fun stop() {
+    @Synchronized
+    private fun stop() {
         parentGroup.shutdownGracefully().sync()
         childGroup.shutdownGracefully().sync()
-        logger.error("Socket server closed.....")
+        logger.info("Socket server closed.....")
     }
 }

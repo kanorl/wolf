@@ -17,5 +17,5 @@ fun main(args: Array<String>) {
             client.write(Command(1, 1), "ping-" + a.andIncrement)
         }
     }
-    10.seconds().sleep()
+    10.seconds.sleep()
 }

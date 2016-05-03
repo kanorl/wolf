@@ -23,7 +23,7 @@ object ExecutorContext {
 
     init {
         transferer.submit {
-            val parkNanos = 5.millis().nanos
+            val parkNanos = 5.millis.nanos
             while (true) {
                 var park = true
                 val pools = taskPools
@@ -39,8 +39,7 @@ object ExecutorContext {
                         }
                     }
                 }
-                if (!park) continue
-                LockSupport.parkNanos(parkNanos)
+                if (park) LockSupport.parkNanos(parkNanos)
             }
         }
 

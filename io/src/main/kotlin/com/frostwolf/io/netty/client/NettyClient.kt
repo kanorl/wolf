@@ -1,7 +1,7 @@
 package com.frostwolf.io.netty.client
 
 import com.frostwolf.common.logging.getLogger
-import com.frostwolf.common.time.millis
+import com.frostwolf.common.time.currentMillis
 import com.frostwolf.io.Command
 import com.frostwolf.io.Request
 import io.netty.bootstrap.Bootstrap
@@ -45,10 +45,10 @@ class NettyClient {
             return
         }
         synchronized(this) {
-            if (millis() - lastConnectTime < reconnectInterval) {
+            if (currentMillis - lastConnectTime < reconnectInterval) {
                 return;
             }
-            lastConnectTime = millis()
+            lastConnectTime = currentMillis
         }
 
         try {

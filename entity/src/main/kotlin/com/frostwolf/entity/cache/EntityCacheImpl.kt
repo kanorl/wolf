@@ -1,5 +1,6 @@
 package com.frostwolf.entity.cache
 
+import com.frostwolf.common.concurrent.task
 import com.frostwolf.common.lang.max
 import com.frostwolf.common.logging.getLogger
 import com.frostwolf.common.scheduling.Scheduler
@@ -61,8 +62,8 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
             querier.query(clazz, where).forEach { cache.put(it.id, it) }
         }
         val interval = if (annotation.persistInterval.isEmpty()) setting.persistInterval else annotation.persistInterval
-        val duration = max(interval.toDuration(), 5.seconds())
-        scheduler.scheduleWithFixedDelay(duration, "${clazz.simpleName} persist") { updateEdited() }
+        val duration = max(interval.toDuration(), 5.seconds)
+        scheduler.scheduleWithFixedDelay(duration, task(name = "${clazz.simpleName} persist") { updateEdited() })
     }
 
     fun updateEdited() {

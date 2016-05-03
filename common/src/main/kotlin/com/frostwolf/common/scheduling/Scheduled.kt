@@ -1,7 +1,6 @@
 package com.frostwolf.common.scheduling
 
-import com.frostwolf.common.concurrent.NamedRunnable
-import com.frostwolf.common.concurrent.namedTask
+import com.frostwolf.common.concurrent.task
 import com.frostwolf.common.reflect.safeGet
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.config.BeanPostProcessor
@@ -26,7 +25,7 @@ class ScheduledManager : BeanPostProcessor, ApplicationListener<ContextRefreshed
     @Autowired
     private lateinit var scheduler: Scheduler
 
-    private var tasks = mapOf<NamedRunnable, String>()
+    private var tasks = mapOf<Runnable, String>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
         return bean;
@@ -38,7 +37,7 @@ class ScheduledManager : BeanPostProcessor, ApplicationListener<ContextRefreshed
             val name = scheduled.name
             val cron = if (scheduled.cron.beanName) ctx.getBean(scheduled.cron.value, String::class.java) else scheduled.cron.value
             val op = it.safeGet<Function0<*>>(bean)!!
-            val task = namedTask(name, { op.invoke() })
+            val task = task(name = name) { op.invoke() }
             tasks += (task to cron)
         }, { it.type == Function0::class.java && it.isAnnotationPresent(Scheduled::class.java) })
 

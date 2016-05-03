@@ -22,7 +22,7 @@ sourceSets {
 ext {
     log4j_version = '2.5'
     guava_version = '19.0'
-    netty_version = '4.1.0.CR2'
+    netty_version = '4.1.0.CR7'
     protobuf_version = '2.6.1'
     protostuff_version = '1.4.0'
     typetools_version = '0.4.4'

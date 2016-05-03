@@ -1,10 +1,11 @@
 package com.frostwolf.io.netty.handler
 
+import com.frostwolf.common.concurrent.task
 import com.frostwolf.common.event.Event
 import com.frostwolf.common.event.EventBus
 import com.frostwolf.common.logging.getLogger
 import com.frostwolf.common.scheduling.Scheduler
-import com.frostwolf.common.time.millis
+import com.frostwolf.common.time.currentMillis
 import com.frostwolf.io.Identity
 import com.frostwolf.io.netty.ChannelIdentifyTimeoutException
 import com.frostwolf.io.netty.ChannelReplacedException
@@ -36,14 +37,14 @@ class ChannelManager : ChannelDuplexHandler() {
     @PostConstruct
     private fun init() {
         val closeDelay = setting.identifyTimeout
-        scheduler.scheduleWithFixedDelay(closeDelay, "AnonymousChannelCleanUp") {
-            val now = millis()
+        scheduler.scheduleWithFixedDelay(closeDelay, task(name = "AnonymousChannelCleanUp") {
+            val now = currentMillis
             channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay.millis }.forEach {
                 it.fireExceptionCaught(ChannelIdentifyTimeoutException)
                 it.close()
                 logger.info("Close channel due to identify timeout: {}", it)
             }
-        }
+        })
     }
 
     private fun channelClosed(channel: Channel) {
@@ -58,7 +59,7 @@ class ChannelManager : ChannelDuplexHandler() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         val channel = ctx.channel()
-        ctx.attr(createTimeKey).setIfAbsent(millis())
+        ctx.attr(createTimeKey).setIfAbsent(currentMillis)
         val prev = channelGroup.putIfAbsent(ctx.channel().id(), ctx)
         check(prev == null, { "Duplicate channel id: ${channel.id()}.(should never happen)" })
         channel.closeFuture().addListener(remover)

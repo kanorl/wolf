@@ -1,5 +1,6 @@
 package com.frostwolf.sample.module.pong
 
+import com.frostwolf.common.concurrent.task
 import com.frostwolf.common.logging.getLogger
 import com.frostwolf.common.scheduling.Scheduler
 import com.frostwolf.common.time.minutes
@@ -13,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.annotation.PostConstruct
 
 @Module(1)
-@Identities(arrayOf(Identity.Companion.Unknown::class))
+@Identities(arrayOf(Identity.Unknown::class))
 class Pong {
     val logger by getLogger()
 
@@ -24,7 +25,7 @@ class Pong {
 
     @PostConstruct
     fun init() {
-        scheduler.scheduleOnce(5.minutes(), "close") { ctx.close() }
+        scheduler.scheduleOnce(5.minutes, task(name = "close"){ ctx.close() })
     }
 
     private lateinit var users: EntityCache<Long, User>
@@ -37,7 +38,7 @@ class Pong {
     val pong: (String) -> Result<String> = {
         n++
         val increment = counter.incrementAndGet()
-        logger.info(it + "-" + n + "-" + increment)
+        logger.info("$it-$n-$increment")
 
         val id = increment % 1000L
         val user = users.getOrCreate(id, { User(id, id.toString(), 10) })

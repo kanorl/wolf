@@ -11,14 +11,13 @@ data class FiniteDuration(val value: Long, val timeUnit: TimeUnit) : Comparable<
     }
 
     companion object {
-        val zero = 0.millis()
         fun parse(string: String): Pair<Long, TimeUnit> = when {
             string.endsWith("ms") -> (string.substring(0, string.length - 2).toLong() to TimeUnit.MILLISECONDS)
             string.endsWith("s") -> (string.substring(0, string.length - 1).toLong() to TimeUnit.SECONDS)
             string.endsWith("m") -> (string.substring(0, string.length - 1).toLong() to TimeUnit.MINUTES)
             string.endsWith("h") -> (string.substring(0, string.length - 1).toLong() to TimeUnit.HOURS)
-            string.endsWith("d") -> (string.substring(0, string.length - 2).toLong() to TimeUnit.DAYS)
-            else -> throw UnsupportedOperationException()
+            string.endsWith("d") -> (string.substring(0, string.length - 1).toLong() to TimeUnit.DAYS)
+            else -> throw UnsupportedOperationException("Failed parsing String: $string")
         }
     }
 
@@ -35,9 +34,13 @@ data class FiniteDuration(val value: Long, val timeUnit: TimeUnit) : Comparable<
 
 }
 
-fun Int.millis(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.MILLISECONDS)
-fun Int.seconds(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.SECONDS)
-fun Int.minutes(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.MINUTES)
-fun Int.days(): FiniteDuration = FiniteDuration(this.toLong(), TimeUnit.DAYS)
+val Int.millis: FiniteDuration
+    get() = FiniteDuration(this.toLong(), TimeUnit.MILLISECONDS)
+val Int.seconds: FiniteDuration
+    get() = FiniteDuration(this.toLong(), TimeUnit.SECONDS)
+val Int.minutes: FiniteDuration
+    get() = FiniteDuration(this.toLong(), TimeUnit.MINUTES)
+val Int.days: FiniteDuration
+    get() = FiniteDuration(this.toLong(), TimeUnit.DAYS)
 
 fun String.toDuration(): FiniteDuration = FiniteDuration(this)

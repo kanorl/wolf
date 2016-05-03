@@ -34,7 +34,7 @@ val jacksonObjectMapper = run {
 /**
  * serialize T as String
  */
-fun <T : Any> T.toJson(): String = jacksonObjectMapper.writeValueAsString(this)
+fun <T : Any> T.toJson(pretty: Boolean = false): String = if (pretty) jacksonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(this) else jacksonObjectMapper.writeValueAsString(this)
 
 /**
  * serialize T as ByteArray
