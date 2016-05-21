@@ -39,7 +39,7 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
     private val updating = ConcurrentHashMap<ID, E>()
 
     private val dbLoader = CacheLoader.from(Function<ID, E> {
-        val loaded = querier.one(it, clazz)
+        val loaded = querier.one(it!!, clazz)
         if (removing.contains(it)) null else updating.remove(it) ?: loaded
     })
     private lateinit var cache: LoadingCache<ID, E>
@@ -95,7 +95,7 @@ internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val
                 throw IllegalStateException("${clazz.simpleName}[$id] is removed")
             }
             if (entity !== loaded) {
-                check(entity.id === id, { "Created entity's id does not match: expected[$id], given[${entity.id}]" })
+                check(entity.id == id, { "Created entity's id does not match: expected[$id], given[${entity.id}]" })
                 persistService.save(entity)
             }
             entity

@@ -32,6 +32,6 @@ class MongoQuerier : Querier {
         (order as? BasicDBObject)?.let { find.sort(it) }
         limit?.let { find.limit(limit) }
         val converter: (Any) -> R? = wrapper ?: { any -> template.converter.read(clazz, any as DBObject) as R }
-        return find.filterNotNull().map { converter(it)!! }
+        return find.map { converter(it)!! }
     }
 }

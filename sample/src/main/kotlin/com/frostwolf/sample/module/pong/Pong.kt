@@ -3,7 +3,7 @@ package com.frostwolf.sample.module.pong
 import com.frostwolf.common.concurrent.task
 import com.frostwolf.common.logging.getLogger
 import com.frostwolf.common.scheduling.Scheduler
-import com.frostwolf.common.time.minutes
+import com.frostwolf.common.time.seconds
 import com.frostwolf.entity.cache.EntityCache
 import com.frostwolf.io.*
 import com.frostwolf.io.netty.handler.Result
@@ -25,7 +25,7 @@ class Pong {
 
     @PostConstruct
     fun init() {
-        scheduler.scheduleOnce(5.minutes, task(name = "close"){ ctx.close() })
+        scheduler.scheduleOnce(10.seconds, task(name = "close"){ ctx.close() })
     }
 
     private lateinit var users: EntityCache<Long, User>

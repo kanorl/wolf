@@ -2,11 +2,11 @@ package com.frostwolf.entity.db
 
 import com.frostwolf.entity.IEntity
 
-internal abstract class PersistTask(val Persistence: Persistence, val entity: IEntity<*>, val callback: (() -> Unit)?) : Runnable {
+internal abstract class PersistTask(val persistence: Persistence, val entity: IEntity<*>, val callback: (() -> Unit)?) : Runnable {
     companion object {
-        fun saveTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Save(Persistence, entity.save(), callback)
-        fun updateTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Update(Persistence, entity.save(), callback)
-        fun removeTask(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Remove(Persistence, entity.save(), callback)
+        fun saveTask(persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Save(persistence, entity.save(), callback)
+        fun updateTask(persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Update(persistence, entity.save(), callback)
+        fun removeTask(persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)? = null): PersistTask = Remove(persistence, entity.save(), callback)
     }
 
     override final fun run() {
@@ -21,20 +21,20 @@ internal abstract class PersistTask(val Persistence: Persistence, val entity: IE
     protected abstract fun persist();
 }
 
-internal class Save(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)?) : PersistTask(Persistence, entity, callback) {
+internal class Save(persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)?) : PersistTask(persistence, entity, callback) {
     override fun persist() {
-        Persistence.save(entity)
+        persistence.save(entity)
     }
 }
 
-internal class Update(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)?) : PersistTask(Persistence, entity, callback) {
+internal class Update(persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)?) : PersistTask(persistence, entity, callback) {
     override fun persist() {
-        Persistence.update(entity)
+        persistence.update(entity)
     }
 }
 
-internal class Remove(Persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)?) : PersistTask(Persistence, entity, callback) {
+internal class Remove(persistence: Persistence, entity: IEntity<*>, callback: (() -> Unit)?) : PersistTask(persistence, entity, callback) {
     override fun persist() {
-        Persistence.remove(entity)
+        persistence.remove(entity)
     }
 }

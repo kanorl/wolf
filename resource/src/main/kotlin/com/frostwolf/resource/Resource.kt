@@ -6,7 +6,7 @@ import com.google.common.collect.ComparisonChain
 
 abstract class Resource : Ordered {
 
-    abstract val id: Int
+    val id: Int = 0
 
     fun weight(): Int = 0
 

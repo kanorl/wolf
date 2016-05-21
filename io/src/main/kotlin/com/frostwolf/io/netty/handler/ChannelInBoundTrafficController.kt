@@ -1,6 +1,7 @@
 package com.frostwolf.io.netty.handler
 
 import com.frostwolf.common.logging.getLogger
+import com.frostwolf.common.time.currentMillis
 import com.frostwolf.io.netty.ChannelInboundTrafficExcessException
 import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelHandlerContext
@@ -14,7 +15,7 @@ class ChannelInboundTrafficController(val readLimit: Int) : ChannelInboundHandle
     private var closeFuture: ChannelFuture? = null
 
     override fun channelActive(ctx: ChannelHandlerContext?) {
-        lastCheckTime = System.currentTimeMillis()
+        lastCheckTime = currentMillis
         super.channelActive(ctx)
     }
 
@@ -25,10 +26,11 @@ class ChannelInboundTrafficController(val readLimit: Int) : ChannelInboundHandle
         }
         val num = ++counter
         if (readLimit > 0 && num > readLimit) {
-            val now = System.currentTimeMillis()
+            val now = currentMillis
             if (now - lastCheckTime < 1000) {
                 ctx.fireExceptionCaught(ChannelInboundTrafficExcessException("$num in ${now - lastCheckTime}ms"))
                 closeFuture = ctx.close()
+                return
             }
             counter = 0
             lastCheckTime = now

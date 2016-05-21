@@ -14,6 +14,7 @@ class SocketSetting {
     var options: Map<String, Any> = hashMapOf()
     var childOptions: Map<String, Any> = hashMapOf()
     lateinit var frameLengthMax: Bytes
+    var lengthFieldLength = 4
     var connectionsMax = 5000
     var msgNumPerSecond = 20
     lateinit var compressThreshold: Bytes

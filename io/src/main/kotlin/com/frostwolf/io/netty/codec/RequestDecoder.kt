@@ -16,7 +16,7 @@ class RequestDecoder(
         lengthFieldOffset: Int = 0,
         lengthFieldLength: Int = 4,
         lengthAdjustment: Int = 0,
-        initialBytesToStrip: Int = 4,
+        initialBytesToStrip: Int = lengthFieldLength,
         failFast: Boolean = true,
         val compressor: Compressor? = null
 ) : LengthFieldBasedFrameDecoder(byteOrder, maxFrameLength, lengthFieldOffset, lengthFieldLength, lengthAdjustment, initialBytesToStrip, failFast) {

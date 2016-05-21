@@ -17,7 +17,7 @@ val currentMillis: Long
 @Suppress("IMPLICIT_CAST_TO_ANY")
 inline fun <reified T : Any> now(): T {
     return when (T::class.java) {
-        Long::class.javaObjectType -> System.currentTimeMillis()
+        Long::class.javaObjectType -> currentMillis
         LocalDateTime::class.java -> LocalDateTime.now()
         LocalDate::class.java -> LocalDate.now()
         LocalTime::class.java -> LocalTime.now()
