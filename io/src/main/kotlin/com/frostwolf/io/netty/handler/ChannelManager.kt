@@ -39,7 +39,7 @@ class ChannelManager : ChannelDuplexHandler() {
         val closeDelay = setting.identifyTimeout
         scheduler.scheduleWithFixedDelay(closeDelay, task(name = "AnonymousChannelCleanUp") {
             val now = currentMillis
-            channelGroup.values.filter { !it.identified() && now - (it.attr(createTimeKey).get() ?: 0) > closeDelay.millis }.forEach {
+            channelGroup.values.filter { !it.identified() && now - (it.channel().attr(createTimeKey).get() ?: 0) > closeDelay.millis }.forEach {
                 it.fireExceptionCaught(ChannelIdentifyTimeoutException)
                 it.close()
                 logger.info("Close channel due to identify timeout: {}", it)
@@ -59,7 +59,7 @@ class ChannelManager : ChannelDuplexHandler() {
 
     override fun channelActive(ctx: ChannelHandlerContext) {
         val channel = ctx.channel()
-        ctx.attr(createTimeKey).setIfAbsent(currentMillis)
+        ctx.channel().attr(createTimeKey).setIfAbsent(currentMillis)
         val prev = channelGroup.putIfAbsent(ctx.channel().id(), ctx)
         check(prev == null, { "Duplicate channel id: ${channel.id()}.(should never happen)" })
         channel.closeFuture().addListener(remover)
@@ -72,7 +72,7 @@ class ChannelManager : ChannelDuplexHandler() {
         val group = identifiedChannelGroups.computeIfAbsent(identity.javaClass, { ConcurrentHashMap<Identity, ChannelHandlerContext>() })
         val removed = group.remove(identity)
         removed?.let {
-            it.attr(identityKey).remove()
+            it.channel().attr(identityKey).remove()
             it.fireExceptionCaught(ChannelReplacedException)
             it.close()
         }
@@ -90,7 +90,7 @@ class ChannelManager : ChannelDuplexHandler() {
 
 private val identityKey = AttributeKey.valueOf<Identity>("identity")
 fun ChannelHandlerContext.identity(): Identity? {
-    return this.attr(identityKey).get()
+    return this.channel().attr(identityKey).get()
 }
 
 fun Channel.identity(): Identity? {
@@ -98,7 +98,7 @@ fun Channel.identity(): Identity? {
 }
 
 private fun ChannelHandlerContext.identity(identity: Identity) {
-    this.attr(identityKey).setIfAbsent(identity)?.let { throw IllegalStateException("identity[$identity] is already set.") }
+    this.channel().attr(identityKey).setIfAbsent(identity)?.let { throw IllegalStateException("identity[$identity] is already set.") }
 }
 
 fun ChannelHandlerContext.identified(): Boolean = this.identity() != null

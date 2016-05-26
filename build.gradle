@@ -22,7 +22,7 @@ sourceSets {
 ext {
     log4j_version = '2.5'
     guava_version = '19.0'
-    netty_version = '4.1.0.CR7'
+    netty_version = '4.1.0.Final'
     protobuf_version = '2.6.1'
     protostuff_version = '1.4.0'
     typetools_version = '0.4.4'
@@ -33,6 +33,7 @@ ext {
     mongo_version = '3.2.2'
     disruptor_version = '3.3.4'
     gs_collections_version = '7.0.3'
+    mvel_version = '2.2.8.Final'
 }
 
 ext {
@@ -84,6 +85,7 @@ ext {
             "com.goldmansachs:gs-collections:$gs_collections_version",
             "com.goldmansachs:gs-collections-forkjoin:$gs_collections_version"
     ]
+    mvel = "org.mvel:mvel2:$mvel_version"
 }
 
 allprojects {

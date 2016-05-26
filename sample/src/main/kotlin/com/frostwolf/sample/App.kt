@@ -38,8 +38,8 @@ fun main(args: Array<String>) {
 
 fun loadSystemProperties() {
     val p = Properties()
-    FileInputStream(ResourceUtils.getFile("classpath:system.properties")).use { p.load(it) }
-    for ((k, v) in p) {
-        System.setProperty(k.toString(), v.toString())
+    FileInputStream(ResourceUtils.getFile("classpath:system.properties")).use {
+        p.load(it)
+        System.setProperties(p)
     }
 }
