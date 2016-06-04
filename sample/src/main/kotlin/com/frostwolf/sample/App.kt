@@ -33,13 +33,14 @@ fun main(args: Array<String>) {
     while (context.isActive) {
         TimeUnit.SECONDS.sleep(10)
     }
-    context.close()
 }
 
 fun loadSystemProperties() {
     val p = Properties()
     FileInputStream(ResourceUtils.getFile("classpath:system.properties")).use {
         p.load(it)
-        System.setProperties(p)
+    }
+    p.forEach {
+        System.setProperty(it.key.toString(), it.value.toString())
     }
 }

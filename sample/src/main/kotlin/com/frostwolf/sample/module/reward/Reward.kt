@@ -1,36 +1,44 @@
 package com.frostwolf.sample.module.reward
 
-import com.frostwolf.common.lang.isPositive
+import com.frostwolf.common.lang.isNegative
 import com.frostwolf.common.toJson
+import java.util.*
 
-open class Reward(private val _num: Int, val type: RewardType, val expression: String? = "") {
+abstract class Reward(val type: RewardType, val num: Int) {
     init {
-        check(_num.isPositive, { "num must be positive" })
-        check(!(_num != 0 && !expression.isNullOrEmpty()))
-        check(!(_num == 0 && expression.isNullOrEmpty()))
+        check(!num.isNegative, { "num must NOT be negative" })
     }
 
     override fun toString(): String {
-        return this.javaClass.simpleName + this.toJson()
+        return this.toJson()
     }
 
-    val num: Int
-        get() = expression?.let { throw UnsupportedOperationException() } ?: _num
+    abstract fun mergeable(other: Reward): Boolean
+    abstract fun copy(num: Int = this.num): Reward
 
-    open fun mergable(other: Reward): Boolean = this.type == other.type
+    final operator fun plus(num: Int): Reward = copy(this.num + num)
+    final operator fun minus(num: Int): Reward = copy(this.num - num)
+    final operator fun times(multiple: Int): Reward = copy(this.num * multiple)
 }
 
-class ItemReward(val itemId: Int, num: Int) : Reward(num, RewardType.Item) {
-    operator fun plus(num: Int): ItemReward = ItemReward(itemId, num = this.num + num)
-    operator fun minus(num: Int): ItemReward = ItemReward(itemId, num = this.num - num)
-    operator fun times(multiple: Int): ItemReward = ItemReward(itemId, num = this.num * multiple)
+class SimpleReward(type: RewardType, num: Int) : Reward(type, num) {
+    override fun mergeable(other: Reward): Boolean = type == other.type
+
+    override fun copy(num: Int): Reward = SimpleReward(type, num)
 }
 
-fun main(args: Array<String>) {
-    val r = ItemReward(1, 1)
-    println(r + 2)
-    println(r * 2)
+class ItemReward(val itemId: Int, num: Int) : Reward(RewardType.Item, num) {
+    override fun mergeable(other: Reward): Boolean = other is ItemReward && this.itemId == other.itemId
 
-    val rewards = listOf(ItemReward(1, 1), ItemReward(1, 1))
-    rewards.groupBy({ it.itemId }, {}).values.toList()
+    override fun copy(num: Int): ItemReward = ItemReward(itemId, num)
+}
+
+@Suppress("UNCHECKED_CAST")
+fun <E : Reward> Collection<E>.merged(): List<E> {
+    val merged = ArrayList<E>(this.size)
+    this.forEach { r ->
+        val index = merged.indexOfFirst { it.mergeable(r) }
+        if (index == -1) merged.add(r.copy() as E) else merged[index] = (merged[index] + r.num) as E
+    }
+    return merged
 }

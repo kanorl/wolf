@@ -20,7 +20,7 @@ sourceSets {
 }
 
 ext {
-    log4j_version = '2.5'
+//    log4j_version = '2.6'
     guava_version = '19.0'
     netty_version = '4.1.0.Final'
     protobuf_version = '2.6.1'
@@ -50,6 +50,11 @@ ext {
             "org.springframework.boot:spring-boot-starter-log4j2",
             "org.springframework.boot:spring-boot-configuration-processor"
     ]
+//    log4j = [
+//            "org.apache.logging.log4j:log4j-core:$log4j_version",
+//            "org.apache.logging.log4j:log4j-api:$log4j_version",
+//            "org.apache.logging.log4j:log4j-slf4j-impl:$log4j_version",
+//    ]
     mongodb = [
             "org.springframework.boot:spring-boot-starter-data-mongodb",
             "org.mongodb:mongo-java-driver"
@@ -104,6 +109,7 @@ allprojects {
         testCompile "junit:junit"
         compile kotlin
         compile spring_boot
+//        compile log4j
         compile guava
         compile apache_commons
         compile reflections

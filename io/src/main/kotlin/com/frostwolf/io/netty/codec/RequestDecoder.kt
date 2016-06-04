@@ -34,7 +34,5 @@ class RequestDecoder(
         return Request(Command(module, cmd), data.toArray())
     }
 
-    override fun extractFrame(ctx: ChannelHandlerContext?, buffer: ByteBuf?, index: Int, length: Int): ByteBuf? {
-        return buffer?.slice(index, length)
-    }
+    override fun extractFrame(ctx: ChannelHandlerContext, buffer: ByteBuf, index: Int, length: Int): ByteBuf = buffer.slice(index, length)
 }
