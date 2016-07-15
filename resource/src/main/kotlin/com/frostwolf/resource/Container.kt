@@ -46,7 +46,7 @@ internal class ContainerImpl<T : Resource> : Container<T> {
     override fun random(): T? = set.random (totalWeight) { it.weight() }
 }
 
-internal class DelegatingContainer<T : Resource> : Container<T> {
+internal class DelegatedContainer<T : Resource> : Container<T> {
     internal lateinit var delegatee: Container<T>
 
     override fun get(id: Int): T? = delegatee[id]

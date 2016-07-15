@@ -17,14 +17,14 @@ import javax.annotation.PostConstruct
 
 @Component
 @ChannelHandler.Sharable
-class ChannelFilterManager : ChannelInboundHandlerAdapter() {
+open class ChannelFilterManager : ChannelInboundHandlerAdapter() {
     @Autowired
     private lateinit var socketSetting: SocketSetting
     @Autowired
     private lateinit var ctx: ApplicationContext
 
-    private lateinit var whiteListIpRules: List<IpFilterRule>;
-    private lateinit var filters: List<ChannelFilter>;
+    private lateinit var whiteListIpRules: List<IpFilterRule>
+    private lateinit var filters: List<ChannelFilter>
 
     @PostConstruct
     private fun init() {

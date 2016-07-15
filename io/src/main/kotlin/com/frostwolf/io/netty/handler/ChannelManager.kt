@@ -19,7 +19,7 @@ import javax.annotation.PostConstruct
 
 @Component
 @ChannelHandler.Sharable
-class ChannelManager : ChannelDuplexHandler() {
+open class ChannelManager : ChannelDuplexHandler() {
     val logger by getLogger() // TODO session log
 
     @Autowired

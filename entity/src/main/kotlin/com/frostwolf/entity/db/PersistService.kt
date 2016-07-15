@@ -2,22 +2,22 @@ package com.frostwolf.entity.db
 
 import com.frostwolf.common.concurrent.ExecutorContext
 import com.frostwolf.common.concurrent.TaskPool
-import com.frostwolf.entity.IEntity
+import com.frostwolf.entity.Entity
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 
 internal interface PersistService {
 
-    fun save(entity: IEntity<*>, callback: (() -> Unit)? = null)
+    fun save(entity: Entity<*>, callback: (() -> Unit)? = null)
 
-    fun update(entity: IEntity<*>, callback: (() -> Unit)? = null)
+    fun update(entity: Entity<*>, callback: (() -> Unit)? = null)
 
-    fun remove(entity: IEntity<*>, callback: (() -> Unit)? = null)
+    fun remove(entity: Entity<*>, callback: (() -> Unit)? = null)
 }
 
 @Component
-internal class PersistServiceImpl : PersistService {
+internal open class PersistServiceImpl : PersistService {
 
     @Autowired
     private lateinit var persistence: Persistence
@@ -29,15 +29,15 @@ internal class PersistServiceImpl : PersistService {
         taskPool = ExecutorContext.createTaskPool("persist")
     }
 
-    override fun save(entity: IEntity<*>, callback: (() -> Unit)?) {
+    override fun save(entity: Entity<*>, callback: (() -> Unit)?) {
         submit(PersistTask.saveTask(persistence, entity, callback))
     }
 
-    override fun update(entity: IEntity<*>, callback: (() -> Unit)?) {
+    override fun update(entity: Entity<*>, callback: (() -> Unit)?) {
         submit(PersistTask.updateTask(persistence, entity, callback))
     }
 
-    override fun remove(entity: IEntity<*>, callback: (() -> Unit)?) {
+    override fun remove(entity: Entity<*>, callback: (() -> Unit)?) {
         submit(PersistTask.removeTask(persistence, entity, callback))
     }
 

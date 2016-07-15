@@ -6,8 +6,8 @@ import com.frostwolf.io.netty.handler.identity
 import io.netty.channel.Channel
 import io.netty.channel.ChannelId
 
-interface Param<T> {
-    fun getValue(request: Request<*>, channel: Channel): T;
+interface Param<out T> {
+    fun getValue(request: Request<*>, channel: Channel): T
 }
 
 class ChannelIdParam : Param<ChannelId> {

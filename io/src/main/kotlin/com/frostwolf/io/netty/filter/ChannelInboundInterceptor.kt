@@ -6,7 +6,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.util.internal.TypeParameterMatcher
 
 
-abstract class ChannelInboundInterceptor<I> : ChannelInboundHandlerAdapter(), Ordered {
+abstract class ChannelInboundInterceptor<in I> : ChannelInboundHandlerAdapter(), Ordered {
     private val matcher = TypeParameterMatcher.find(this, ChannelInboundInterceptor::class.java, "I")
 
     @Suppress("UNCHECKED_CAST")

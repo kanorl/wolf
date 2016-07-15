@@ -4,27 +4,24 @@ import com.frostwolf.common.logging.getLogger
 import com.frostwolf.common.reflect.subTypes
 import com.frostwolf.common.toObj
 import com.google.common.io.Files
-import org.springframework.beans.factory.FactoryBean
-import org.springframework.stereotype.Component
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.io.File
 import javax.inject.Inject
 
-@Component
-class ResourceReaderFactoryBean : FactoryBean<Reader> {
+@Configuration
+open class ResourceConfiguration{
     val logger by getLogger()
 
     @Inject
     private lateinit var setting: ResourceSetting
 
-    override fun getObject(): Reader {
+    @Bean
+    open fun reader(): Reader {
         val reader = Reader::class.java.subTypes().map { it.kotlin.objectInstance }.find { it?.name.equals(setting.reader) }
         reader?.let { logger.info("Using Reader: {}", reader.javaClass.simpleName) }
         return reader ?: throw NoSuchReaderException("Reader[${setting.reader}] not found in ${Reader::class.java.subTypes().map { it.kotlin.objectInstance?.name }.firstOrNull()}")
     }
-
-    override fun isSingleton(): Boolean = true
-
-    override fun getObjectType(): Class<*>? = Reader::class.java
 }
 
 class NoSuchReaderException(msg: String) : RuntimeException(msg)

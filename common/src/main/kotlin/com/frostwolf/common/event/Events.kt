@@ -14,7 +14,7 @@ interface Event
 
 @Suppress("UNCHECKED_CAST")
 @Component
-class EventListenerManager : BeanPostProcessor {
+open class EventListenerManager : BeanPostProcessor {
 
     private var listeners: Map<Class<*>, List<EventListener<in Event>>> = mapOf()
 
@@ -41,7 +41,7 @@ class EventListenerManager : BeanPostProcessor {
 }
 
 @Component
-class EventBus {
+open class EventBus {
 
     @Autowired
     private lateinit var listenerManager: EventListenerManager

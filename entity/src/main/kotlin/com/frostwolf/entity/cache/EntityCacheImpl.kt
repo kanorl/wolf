@@ -7,8 +7,8 @@ import com.frostwolf.common.scheduling.Scheduler
 import com.frostwolf.common.time.seconds
 import com.frostwolf.common.time.toDuration
 import com.frostwolf.common.toJson
+import com.frostwolf.entity.Entity
 import com.frostwolf.entity.EntitySetting
-import com.frostwolf.entity.IEntity
 import com.frostwolf.entity.db.PersistService
 import com.frostwolf.entity.db.Querier
 import com.google.common.base.Function
@@ -23,7 +23,7 @@ import javax.annotation.PostConstruct
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-internal class EntityCacheImpl<ID : Comparable<ID>, E : IEntity<ID>>(private val clazz: Class<E>) : EntityCache<ID, E> {
+internal class EntityCacheImpl<ID : Comparable<ID>, E : Entity<ID>>(private val clazz: Class<E>) : EntityCache<ID, E> {
     private val logger by getLogger()
 
     @Autowired

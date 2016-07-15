@@ -21,8 +21,6 @@ class RequestDecoder(
         val compressor: Compressor? = null
 ) : LengthFieldBasedFrameDecoder(byteOrder, maxFrameLength, lengthFieldOffset, lengthFieldLength, lengthAdjustment, initialBytesToStrip, failFast) {
 
-    constructor(maxFrameLength: Int, lengthFieldOffset: Int, lengthFieldLength: Int, failFast: Boolean, compressor: Compressor? = null) : this(ByteOrder.BIG_ENDIAN, maxFrameLength, lengthFieldOffset, lengthFieldLength, 0, 4, failFast, compressor)
-
     override fun decode(ctx: ChannelHandlerContext, `in`: ByteBuf?): Any? {
         val frame = super.decode(ctx, `in`) as? ByteBuf ?: return null
         val needDecompress = frame.readByte() == 1.toByte()

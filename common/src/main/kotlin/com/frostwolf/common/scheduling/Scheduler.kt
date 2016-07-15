@@ -20,7 +20,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ThreadFactory
 
 @Component
-internal class MillisBasedTaskScheduler : ThreadPoolTaskScheduler() {
+internal open class MillisBasedTaskScheduler : ThreadPoolTaskScheduler() {
     val log by getLogger()
 
     @Autowired(required = false)
@@ -57,7 +57,7 @@ interface Scheduler {
 }
 
 @Component
-internal class DelegatingScheduler : Scheduler {
+internal open class DelegatedScheduler : Scheduler {
     @Autowired
     private lateinit var delegate: MillisBasedTaskScheduler
 

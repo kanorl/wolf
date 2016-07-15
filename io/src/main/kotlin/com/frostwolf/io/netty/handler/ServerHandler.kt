@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @ChannelHandler.Sharable
-class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
+open class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
     val logger by getLogger()
 
     @Autowired

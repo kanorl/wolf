@@ -34,7 +34,7 @@ inline fun <reified T> success(value: T? = null): Result<T> = Result(0, value)
 
 @Suppress("UNCHECKED_CAST")
 @Component
-class RequestHandlerManager : BeanPostProcessor {
+open class RequestHandlerManager : BeanPostProcessor {
     val logger by getLogger()
 
     @Autowired
@@ -45,7 +45,7 @@ class RequestHandlerManager : BeanPostProcessor {
     private var sequenceNo = mapOf<Command, Int>()
 
     override fun postProcessBeforeInitialization(bean: Any?, beanName: String?): Any? {
-        return bean;
+        return bean
     }
 
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
@@ -92,7 +92,7 @@ class RequestHandlerManager : BeanPostProcessor {
                 },
                 { it.isAnnotationPresent(Cmd::class.java) && Function::class.java.isAssignableFrom(it.type) }
         )
-        return bean;
+        return bean
     }
 
     @Synchronized

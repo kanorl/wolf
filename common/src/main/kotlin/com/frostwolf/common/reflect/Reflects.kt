@@ -10,7 +10,7 @@ import java.lang.reflect.Modifier
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
-fun <T : Type> T.args(clazz: Class<*>) = TypeResolver.resolveRawArguments(this, clazz) ?: emptyArray()
+fun <T : Type> T.args(clazz: Class<*>): Array<out Class<*>> = TypeResolver.resolveRawArguments(this, clazz) ?: emptyArray()
 
 fun Field.typeArgs(): List<Class<*>> {
     val genericType = this.genericType

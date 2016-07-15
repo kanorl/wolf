@@ -8,7 +8,7 @@ import com.google.common.cache.CacheLoader
 import org.mvel2.MVEL
 import java.io.Serializable
 
-private val cache = CacheBuilder.newBuilder().weakKeys().weakValues().build(CacheLoader.from<String, Serializable> { MVEL.compileExpression((it)) })
+private val cache = CacheBuilder.newBuilder().maximumSize(500).build(CacheLoader.from<String, Serializable> { MVEL.compileExpression(it) })
 
 fun <T> eval(expression: String, vararg params: Any): T {
     val args: Map<String, Any> = when (params.size) {
@@ -29,10 +29,4 @@ fun <T> eval(expression: String, args: Map<String, Any>): T = try {
 } catch(e: Exception) {
     defaultLogger.error("Eval failed: expression=$expression, args=$args", e)
     throw e
-}
-
-object Evaluator{
-    fun foo() {
-
-    }
 }

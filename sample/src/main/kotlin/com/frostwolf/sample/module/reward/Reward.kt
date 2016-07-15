@@ -16,9 +16,9 @@ abstract class Reward(val type: RewardType, val num: Int) {
     abstract fun mergeable(other: Reward): Boolean
     abstract fun copy(num: Int = this.num): Reward
 
-    final operator fun plus(num: Int): Reward = copy(this.num + num)
-    final operator fun minus(num: Int): Reward = copy(this.num - num)
-    final operator fun times(multiple: Int): Reward = copy(this.num * multiple)
+    operator fun plus(num: Int): Reward = copy(this.num + num)
+    operator fun minus(num: Int): Reward = copy(this.num - num)
+    operator fun times(multiple: Int): Reward = copy(this.num * multiple)
 }
 
 class SimpleReward(type: RewardType, num: Int) : Reward(type, num) {

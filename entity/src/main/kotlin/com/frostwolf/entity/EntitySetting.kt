@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 @ConfigurationProperties("entity")
-class EntitySetting {
+open class EntitySetting {
     @NestedConfigurationProperty
     var cache: CacheSetting = CacheSetting()
     @NestedConfigurationProperty

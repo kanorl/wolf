@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component
 import java.lang.reflect.Field
 
 @Component
-class NettyServer : ApplicationListener<ApplicationContextEvent> {
+open class NettyServer : ApplicationListener<ApplicationContextEvent> {
     val logger by getLogger()
 
     @Autowired

@@ -9,7 +9,7 @@ import com.frostwolf.resource.Resource
 class SimpleConfig() : Resource() {
 
     @JsonCreator
-    constructor ( s: String) : this() {
+    constructor (s: String) : this() {
         println(111111)
     }
 

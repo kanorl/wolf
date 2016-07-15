@@ -30,7 +30,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     private lateinit var setting: ResourceSetting
 
     private var containers = mapOf<Class<out Resource>, ContainerImpl<Resource>>()
-    private var injectedContainers = hashMapOf<Class<out Resource>, DelegatingContainer<Resource>>()
+    private var injectedContainers = hashMapOf<Class<out Resource>, DelegatedContainer<Resource>>()
 
     @PostConstruct
     private fun init() {
@@ -55,7 +55,7 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
         ReflectionUtils.doWithFields(bean.javaClass,
                 {
                     val clazz = it.typeArgs().first() as Class<out Resource>
-                    val container = DelegatingContainer<Resource>()
+                    val container = DelegatedContainer<Resource>()
                     injectedContainers.put(clazz, container)
                     ReflectionUtils.makeAccessible(it)
                     it.set(bean, container)
@@ -102,8 +102,8 @@ class ResourceManager : BeanPostProcessor, ApplicationListener<ContextRefreshedE
     @Synchronized
     private fun refresh(containers: Map<Class<out Resource>, ContainerImpl<Resource>>) {
         containers.forEach {
-            val delegatingContainer = injectedContainers.computeIfAbsent(it.key, { DelegatingContainer<Resource>() })
-            delegatingContainer.delegatee = it.value
+            val delegatedContainer = injectedContainers.computeIfAbsent(it.key, { DelegatedContainer<Resource>() })
+            delegatedContainer.delegatee = it.value
         }
         eventBus.post(ResourceRefreshed(containers.keys))
     }

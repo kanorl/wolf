@@ -1,8 +1,8 @@
 package com.frostwolf.entity.db.mongo
 
+import com.frostwolf.entity.Entity
 import com.frostwolf.entity.EntityIdGenerator
 import com.frostwolf.entity.EntitySetting
-import com.frostwolf.entity.IEntity
 import com.frostwolf.entity.db.Querier
 import com.mongodb.BasicDBObject
 import com.mongodb.DBObject
@@ -17,9 +17,9 @@ class MongoEntityIdGenerator : EntityIdGenerator {
     @Autowired
     private lateinit var querier: Querier
 
-    private val cache = ConcurrentHashMap<Triple<Class<out IEntity<*>>, Short, Short>, AtomicLong>()
+    private val cache = ConcurrentHashMap<Triple<Class<out Entity<*>>, Short, Short>, AtomicLong>()
 
-    override fun <T : IEntity<Long>> next(entityClass: Class<T>, platform: Short, server: Short): Long {
+    override fun <T : Entity<Long>> next(entityClass: Class<T>, platform: Short, server: Short): Long {
         val key = Triple(entityClass, platform, server)
         val next = cache.computeIfAbsent(key, {
             val range = range(platform, server)

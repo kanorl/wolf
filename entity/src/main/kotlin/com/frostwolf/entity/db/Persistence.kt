@@ -1,12 +1,12 @@
 package com.frostwolf.entity.db
 
-import com.frostwolf.entity.IEntity
+import com.frostwolf.entity.Entity
 
 interface Persistence {
 
-    fun <T : IEntity<*>> save(entity: T)
+    fun <T : Entity<*>> save(entity: T)
 
-    fun <T : IEntity<*>> remove(entity: T)
+    fun <T : Entity<*>> remove(entity: T)
 
-    fun <T : IEntity<*>> update(entity: T)
+    fun <T : Entity<*>> update(entity: T)
 }

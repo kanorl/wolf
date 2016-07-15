@@ -1,5 +1,5 @@
 package com.frostwolf.entity
 
 interface EntityIdGenerator {
-    fun <T : IEntity<Long>> next(entityClass: Class<T>, platform: Short, server: Short): Long
+    fun <T : Entity<Long>> next(entityClass: Class<T>, platform: Short, server: Short): Long
 }

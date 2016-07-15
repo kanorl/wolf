@@ -16,4 +16,4 @@ fun <T : Any> unwrapCompanionClass(javaClass: Class<T>): Class<*> {
     }
 }
 
-val defaultLogger = LoggerFactory.getLogger("default")
+val defaultLogger = LoggerFactory.getLogger("default")!!

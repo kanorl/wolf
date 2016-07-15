@@ -1,7 +1,7 @@
 package com.frostwolf.entity.cache
 
-import com.frostwolf.common.reflect.typeArgs
 import com.frostwolf.common.reflect.safeSet
+import com.frostwolf.common.reflect.typeArgs
 import com.frostwolf.entity.EntitySetting
 import com.frostwolf.entity.db.PersistService
 import org.springframework.beans.factory.annotation.Autowired
@@ -13,7 +13,7 @@ import javax.annotation.PreDestroy
 
 @Suppress("UNCHECKED_CAST")
 @Component
-class EntityCacheManager : BeanPostProcessor {
+open class EntityCacheManager : BeanPostProcessor {
 
     @Autowired
     private lateinit var ctx: ApplicationContext

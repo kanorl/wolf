@@ -1,8 +1,8 @@
 package com.frostwolf.sample.module.pong
 
-import com.frostwolf.entity.IEntity
+import com.frostwolf.entity.Entity
 
-class User private constructor() : IEntity<Long>() {
+class User private constructor() : Entity<Long>() {
     override var id: Long = 0
     var name: String = ""
     var age: Int = 0

@@ -1,7 +1,9 @@
 package com.frostwolf.io.netty
 
-class ChannelInboundTrafficExcessException(msg: String) : com.frostwolf.common.lang.IgnoreStackTraceException(msg)
+import com.frostwolf.common.lang.NoStackTraceException
 
-object ChannelReplacedException : com.frostwolf.common.lang.IgnoreStackTraceException()
+class ChannelInboundTrafficExcessException(msg: String) : NoStackTraceException(msg)
 
-object ChannelIdentifyTimeoutException : com.frostwolf.common.lang.IgnoreStackTraceException()
+object ChannelReplacedException : NoStackTraceException()
+
+object ChannelIdentifyTimeoutException : NoStackTraceException()

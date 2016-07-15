@@ -1,8 +1,8 @@
 package com.frostwolf.entity.cache
 
-import com.frostwolf.entity.IEntity
+import com.frostwolf.entity.Entity
 
-interface EntityCache<K : Comparable<K>, E : IEntity<K>> {
+interface EntityCache<K : Comparable<K>, E : Entity<K>> {
 
     operator fun get(id: K): E?
 

@@ -2,7 +2,7 @@ package com.frostwolf.common.lang
 
 import java.util.concurrent.ThreadLocalRandom
 
-fun current() = ThreadLocalRandom.current()
+fun current(): ThreadLocalRandom = ThreadLocalRandom.current()
 
 fun nextInt(bound: Int): Int = current().nextInt(bound)
 

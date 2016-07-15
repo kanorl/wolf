@@ -28,7 +28,7 @@ class ChannelWriter : ChannelOutboundHandlerAdapter() {
     private lateinit var socketSetting: SocketSetting
     @Autowired(required = false)
     private var compressor: Compressor? = null
-    @Autowired
+    @Autowired(required = false)
     private lateinit var codec: Codec
 
     override fun write(ctx: ChannelHandlerContext, msg: Any, promise: ChannelPromise) {

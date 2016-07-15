@@ -19,7 +19,7 @@ annotation class Scheduled(val name: String, val cron: Cron)
 annotation class Cron(val value: String, val beanName: Boolean = false)
 
 @Component
-class ScheduledManager : BeanPostProcessor, ApplicationListener<ContextRefreshedEvent> {
+open class ScheduledManager : BeanPostProcessor, ApplicationListener<ContextRefreshedEvent> {
     @Autowired
     private lateinit var ctx: ApplicationContext
     @Autowired

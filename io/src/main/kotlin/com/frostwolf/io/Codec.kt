@@ -11,27 +11,24 @@ import io.protostuff.LinkedBuffer
 import io.protostuff.ProtobufIOUtil
 import io.protostuff.ProtostuffIOUtil
 import io.protostuff.runtime.RuntimeSchema
-import org.springframework.beans.factory.FactoryBean
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
 import java.util.concurrent.ConcurrentHashMap
 
-@Component
-internal class CodecFactoryBean : FactoryBean<Codec> {
+@Configuration
+internal open class CodecProvider {
     val log by getLogger()
 
     @Autowired
     private lateinit var setting: SocketSetting
 
-    override fun getObject(): Codec {
+    @Bean
+    open fun codec(): Codec {
         val codec = Codec::class.java.subTypes().map { it.kotlin.objectInstance }.find { it?.name.equals(setting.codec, true) }
         codec?.let { log.info("Using codec: {}", codec.javaClass.simpleName) }
         return codec ?: throw NoSuchCodecException("Codec[${setting.codec}] not found in ${Codec::class.java.subTypes().map { it.kotlin.objectInstance?.name }.filterNotNull()}")
     }
-
-    override fun isSingleton(): Boolean = true
-
-    override fun getObjectType(): Class<*>? = Codec::class.java
 }
 
 class NoSuchCodecException(msg: String) : RuntimeException(msg)
@@ -49,7 +46,7 @@ object ProtoBufCodec : Codec {
 
     private fun <T : MessageLite> defaultInstance(type: Class<out T>): MessageLite = defaultInstances.computeIfAbsent(type, { it.getMethod("getDefaultInstance").invoke(null) as T }) as T
 
-    override fun encode(obj: Any?): ByteArray = (obj as? MessageLite )?.toByteArray() ?: emptyByteArray
+    override fun encode(obj: Any?): ByteArray = (obj as? MessageLite)?.toByteArray() ?: emptyByteArray
 
     override fun <T> decode(data: ByteArray, type: Class<T>): T {
         return defaultInstance(type.asSubclass(MessageLite::class.java)).newBuilderForType().mergeFrom(data).build() as T

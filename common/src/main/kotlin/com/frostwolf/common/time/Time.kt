@@ -14,13 +14,15 @@ fun Date.toLocalDateTime(): LocalDateTime = LocalDateTime.ofInstant(this.toInsta
 val currentMillis: Long
     get() = System.currentTimeMillis()
 
+val defaultClock = Clock.systemDefaultZone()!!
+
 @Suppress("IMPLICIT_CAST_TO_ANY")
 inline fun <reified T : Any> now(): T {
     return when (T::class.java) {
         Long::class.javaObjectType -> currentMillis
-        LocalDateTime::class.java -> LocalDateTime.now()
-        LocalDate::class.java -> LocalDate.now()
-        LocalTime::class.java -> LocalTime.now()
+        LocalDateTime::class.java -> LocalDateTime.now(defaultClock)
+        LocalDate::class.java -> LocalDate.now(defaultClock)
+        LocalTime::class.java -> LocalTime.now(defaultClock)
         Date::class.java -> Date()
         else -> throw UnsupportedOperationException()
     }  as T

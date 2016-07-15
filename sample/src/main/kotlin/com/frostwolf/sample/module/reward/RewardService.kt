@@ -10,7 +10,7 @@ open class RewardService {
 
     @Autowired
     private lateinit var ctx: ApplicationContext
-    private lateinit var argProviders: Collection<RawRewardArgProvider>
+    private lateinit var argProviders: Collection<RawRewardArgProvider<*>>
 
     @PostConstruct
     private fun init() {
