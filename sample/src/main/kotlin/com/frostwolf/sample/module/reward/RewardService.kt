@@ -21,4 +21,9 @@ open class RewardService {
         val args = argProviders.associateBy({ it.key }, { it.value(playerId) })
         return rawRewards.map { it.toReward(args) }
     }
+
+    fun toCosts(playerId: Long, rawCosts: Collection<RawCost>): List<Cost> {
+        val args = argProviders.associateBy({ it.key }, { it.value(playerId) })
+        return rawCosts.map { it.toCost(args) }
+    }
 }

@@ -18,9 +18,9 @@ enum class RewardType(
 
         @JsonCreator
         @JvmStatic
-        fun forValue(value: String): RewardType? = valueOf(value.toInt())
+        fun forValue(value: Int): RewardType? = valueOf(value)
     }
 
     @JsonValue
-    fun toJson(): String = value.toString()
+    fun jsonValue(): Int = value
 }

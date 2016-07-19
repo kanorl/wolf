@@ -1,7 +1,10 @@
 package com.frostwolf.sample.module.reward
 
+import com.fasterxml.jackson.annotation.JsonCreator
+import com.fasterxml.jackson.annotation.JsonValue
 import com.frostwolf.common.el.eval
 import com.frostwolf.common.toJson
+import com.frostwolf.common.toObj
 
 abstract class RawReward<out T : Reward>(val type: RewardType, private val num: String) {
     @Transient
@@ -15,6 +18,21 @@ abstract class RawReward<out T : Reward>(val type: RewardType, private val num: 
     abstract fun toReward(args: Map<String, Any>): T
 
     override fun toString(): String = this.toJson()
+}
+
+
+class RawCost(val rawReward: RawReward<*>) {
+
+    fun toCost(args: Map<String, Any>): Cost = Cost(rawReward.toReward(args))
+
+    @JsonValue
+    fun jsonValue(): String = rawReward.toJson()
+
+    companion object {
+        @JvmStatic
+        @JsonCreator
+        fun fromJson(json: String): RawCost = RawCost(json.toObj<RawReward<*>>())
+    }
 }
 
 class RawSimpleReward(type: RewardType, num: String) : RawReward<SimpleReward>(type, num) {

@@ -13,13 +13,13 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
 
-class RequestHandler(val func: Function<*>, val params: Array<Param<out Any>>, val responseOmit: Boolean) {
+class RequestHandler(val func: Function<*>, val params: Array<Param<Any>>, val responseOmit: Boolean) {
     fun invoke(request: Request<*>, channel: Channel): Any? {
         return func.invoke(params.map { it.getValue(request, channel) })
     }
 }
 
-data class Result<T>(val code: Int, val value: T? = null) {
+data class Result<out T>(val code: Int, val value: T? = null) {
     val success: Boolean
         get() = code == 0
     val failure: Boolean

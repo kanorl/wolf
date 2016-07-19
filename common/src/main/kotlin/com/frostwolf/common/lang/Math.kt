@@ -17,7 +17,8 @@ fun Int.ceilingPowerOf2(): Int {
     return if (n < 0) 1 else if (n >= MaximumPowerOf2) MaximumPowerOf2 else n + 1
 }
 
-fun Int.abs(): Int = Math.abs(this)
+val Int.abs: Int
+    get() = Math.abs(this)
 
 val Int.isPositive: Boolean
     get() = this > 0
@@ -28,6 +29,11 @@ val Long.isPositive: Boolean
     get() = this > 0
 val Long.isNegative: Boolean
     get() = this < 0
+
+val Double.ceil: Double
+    get() = Math.ceil(this)
+val Double.floor: Double
+    get() = Math.floor(this)
 
 fun <T : Comparable<*>> max(o1: T, o2: T): T = if (compareValues(o1, o2) < 0) o2 else o1
 fun <T : Comparable<*>> min(o1: T, o2: T): T = if (compareValues(o1, o2) > 0) o2 else o1

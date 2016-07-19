@@ -1,17 +1,11 @@
 package com.frostwolf.sample.module.simpleconfig
 
-import com.fasterxml.jackson.annotation.JsonCreator
 import com.frostwolf.common.toJson
 import com.frostwolf.common.toObj
 import com.frostwolf.resource.Resource
 
 
 class SimpleConfig() : Resource() {
-
-    @JsonCreator
-    constructor (s: String) : this() {
-        println(111111)
-    }
 
     val value: String = ""
     @Transient
