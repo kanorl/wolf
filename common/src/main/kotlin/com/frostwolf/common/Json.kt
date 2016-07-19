@@ -7,18 +7,12 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.guava.GuavaModule
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.frostwolf.common.logging.defaultLogger
 
 val jacksonObjectMapper: ObjectMapper = run {
     val mapper = jacksonObjectMapper()
-    mapper.
-            registerModule(JavaTimeModule()).
-            registerModule(Jdk8Module()).
-            registerModule(GuavaModule()).
+    mapper.findAndRegisterModules().
             configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true).
             configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false).
             configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).

@@ -8,24 +8,22 @@ import com.google.common.util.concurrent.MoreExecutors
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.LockSupport
 import kotlin.concurrent.thread
 
 val cpuNum = Runtime.getRuntime().availableProcessors()
 
 object ExecutorContext {
     private val logger by getLogger()
-    private val parallelism: Int = (cpuNum * 2).ceilingPowerOf2()
     private var taskPools = arrayOf<TaskPool>()
     private val defaultTaskPool = createTaskPool("default")
-    private val executor = ForkJoinPool(parallelism, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
+    private val executor = ForkJoinPool(cpuNum, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
     private val transferer = Executors.newSingleThreadExecutor(NamedThreadFactory("task-transferer", true))
 
     init {
         transferer.submit {
-            val parkNanos = 5.millis.nanos
+            val duration = 5.millis
             while (true) {
-                var park = true
+                var sleep = true
                 val pools = taskPools
                 pools.forEach {
                     it.taskQueues.forEach {
@@ -35,11 +33,11 @@ object ExecutorContext {
                             } catch(e: Exception) {
                                 logger.error("Transferer failed to submit task to the executor", e)
                             }
-                            park = false
+                            sleep = false
                         }
                     }
                 }
-                if (park) LockSupport.parkNanos(parkNanos)
+                if (sleep) duration.sleep()
             }
         }
 
@@ -55,7 +53,7 @@ object ExecutorContext {
     }
 
     @Synchronized
-    fun createTaskPool(name: String, parallelism: Int = this.parallelism): TaskPool {
+    fun createTaskPool(name: String, parallelism: Int = cpuNum.ceilingPowerOf2()): TaskPool {
         taskPools.find { it.name == name }?.let { throw IllegalStateException("TaskPool[$name] already exists") }
         val p = TaskPool(name, parallelism)
         taskPools += p
@@ -85,10 +83,10 @@ object ExecutorContext {
         executor.submit(task)
     } catch(e: Exception) {
         logger.error("Failed to submit task to the executor", e)
-    }
+    }!!
 }
 
-class TaskPool(val name: String, val parallelism: Int = (cpuNum * 2).ceilingPowerOf2()) {
+class TaskPool(val name: String, parallelism: Int = (cpuNum * 2).ceilingPowerOf2()) {
     internal val taskQueues = (1..parallelism).map { OrderedTaskQueue() }.toTypedArray()
 
     init {
@@ -113,7 +111,7 @@ class TaskPool(val name: String, val parallelism: Int = (cpuNum * 2).ceilingPowe
 
     override fun equals(other: Any?): Boolean {
         if (other == null) {
-            return false;
+            return false
         }
         if (other !is TaskPool) {
             return false
@@ -128,8 +126,8 @@ class TaskPool(val name: String, val parallelism: Int = (cpuNum * 2).ceilingPowe
 
 internal class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*>> {
 
-    val queue = ConcurrentLinkedQueue<Callable<*>>()
-    val available = AtomicBoolean(true)
+    private val queue = ConcurrentLinkedQueue<Callable<*>>()
+    private val available = AtomicBoolean(true)
 
     override val size: Int = queue.size
 
@@ -164,7 +162,7 @@ internal class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*
         }
     })
 
-    fun setAvailable() = available.set(true);
+    fun setAvailable() = available.set(true)
 }
 
 fun ExecutorService.shutdownAndAwaitTermination(timeout: Long = 30, timeUnit: TimeUnit = TimeUnit.SECONDS): Boolean = MoreExecutors.shutdownAndAwaitTermination(this, timeout, timeUnit)
