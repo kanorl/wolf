@@ -7,6 +7,7 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import org.mvel2.MVEL
 import java.io.Serializable
+import java.time.LocalDateTime
 
 private val cache = CacheBuilder.newBuilder().maximumSize(500).build(CacheLoader.from<String, Serializable> { MVEL.compileExpression(it) })
 
@@ -29,4 +30,9 @@ fun <T> eval(expression: String, args: Map<String, Any>): T = try {
 } catch(e: Exception) {
     defaultLogger.error("Eval failed: expression=$expression, args=$args", e)
     throw e
+}
+
+fun main(args: Array<String>) {
+    val expr = "t.plusDays(1)"
+    println(eval<LocalDateTime>(expr, mapOf("t" to LocalDateTime.now())))
 }

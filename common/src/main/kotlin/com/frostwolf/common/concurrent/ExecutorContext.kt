@@ -12,7 +12,7 @@ import kotlin.concurrent.thread
 
 val cpuNum = Runtime.getRuntime().availableProcessors()
 
-object ExecutorContext {
+object ExecutorContext{
     private val logger by getLogger()
     private var taskPools = arrayOf<TaskPool>()
     private val defaultTaskPool = createTaskPool("default")
@@ -41,7 +41,7 @@ object ExecutorContext {
             }
         }
 
-        MoreExecutors.addDelayedShutdownHook(transferer, 1, TimeUnit.MINUTES)
+        MoreExecutors.addDelayedShutdownHook(transferer, 10, TimeUnit.SECONDS)
 
         Runtime.getRuntime().addShutdownHook(thread(false) {
             if (!executor.awaitQuiescence(1, TimeUnit.MINUTES)) {
@@ -146,7 +146,7 @@ internal class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*
         throw UnsupportedOperationException()
     }
 
-    override fun offer(e: Callable<*>): Boolean = queue.offer(Callable<kotlin.Any> {
+    override fun offer(e: Callable<*>): Boolean = queue.offer(Callable<Unit> {
         try {
             e.call()
         } finally {
@@ -154,7 +154,7 @@ internal class OrderedTaskQueue : AbstractQueue<Callable<*>>(), Queue<Callable<*
         }
     })
 
-    fun offer(e: Runnable) = queue.offer(Callable<kotlin.Any> {
+    fun offer(e: Runnable) = queue.offer(Callable<Unit> {
         try {
             e.run()
         } finally {

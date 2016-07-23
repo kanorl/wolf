@@ -23,7 +23,7 @@ open class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
         val command = request.command
         if (!manager.accessible(identity, command)) {
             logger.debug("Access denied: {} from {} access {}", identity, ctx.channel(), command)
-            return;
+            return
         }
         val handler = manager.handler(command)
         if (handler == null) {
@@ -42,13 +42,6 @@ open class ServerHandler : SimpleChannelInboundHandler<Request<ByteArray>>() {
             }
         }
 
-        val sequenceNo = manager.sequenceNo(command)
-        if (sequenceNo != null) {
-            ExecutorContext.submit(sequenceNo, action)
-        } else if (identity != null) {
-            ExecutorContext.submit(identity, action)
-        } else {
-            ExecutorContext.submit(action)
-        }
+        (manager.sequenceNo(command) ?: identity)?.let { ExecutorContext.submit(it, action) } ?:  ExecutorContext.submit(action)
     }
 }

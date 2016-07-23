@@ -95,9 +95,9 @@ ext {
     ]
     mvel = "org.mvel:mvel2:$mvel_version"
     coroutines = [
-            'org.jetbrains.kotlinx:kotlinx-coroutines-generate:0.1-alpha-1',
-            'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.1-alpha-1',
-            'org.jetbrains.kotlinx:kotlinx-coroutines-rx'
+            'org.jetbrains.kotlinx:kotlinx-coroutines-generate:0.1-alpha',
+            'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.1-alpha',
+            'org.jetbrains.kotlinx:kotlinx-coroutines-rx:0.1-alpha'
     ]
 }
 

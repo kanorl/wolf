@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.frostwolf.common.toJson
-import com.frostwolf.common.toObj
 
 object RewardDeserializer : StdDeserializer<Reward>(Reward::class.java) {
 
@@ -33,9 +31,4 @@ class RewardJacksonModule : SimpleModule() {
         addDeserializer(Reward::class.java, RewardDeserializer)
         addDeserializer(RawReward::class.java, RawRewardDeserializer)
     }
-}
-
-fun main(args: Array<String>) {
-    val json = ItemReward(1,1).toJson()
-    println(json.toObj<Reward>())
 }

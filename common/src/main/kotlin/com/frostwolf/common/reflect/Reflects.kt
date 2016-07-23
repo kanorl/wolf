@@ -40,4 +40,4 @@ fun Field.safeSet(target: Any, value: Any) {
 
 fun <T : Any> Class<T>.isAbstract(): Boolean = Modifier.isAbstract(this.modifiers)
 
-inline fun <reified R : Any> Any.cast(): R = this as R
+inline fun <reified R : Any> Any.`as`(): R = this as R
