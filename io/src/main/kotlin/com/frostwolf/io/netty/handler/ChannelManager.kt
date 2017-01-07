@@ -51,7 +51,7 @@ open class ChannelManager : ChannelDuplexHandler() {
         channelGroup.remove(channel.id())?.let { check(it.channel() == channel) } ?: logger.error("Failed to remove Channel: {}", channel)
         val identity = channel.attr(identityKey).get()
         identity?.let {
-            identifiedChannelGroups.remove(it, channel)
+            identifiedChannelGroups[it.javaClass]?.remove(it)
             eventBus.post(ChannelClosedEvent(it))
         }
         channel.closeFuture().removeListener(remover)
