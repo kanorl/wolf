@@ -2,7 +2,7 @@ package com.frostwolf.common.logging
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.reflect.companionObject
+import kotlin.reflect.full.companionObject
 
 fun <T : Any> T.getLogger(): Lazy<Logger> {
     return lazy { LoggerFactory.getLogger(unwrapCompanionClass(this.javaClass)) }

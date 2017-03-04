@@ -44,6 +44,10 @@ fun <T : Any> T.toJsonBytes(): ByteArray = jacksonObjectMapper.writeValueAsBytes
  */
 inline fun <reified T : Any> String.toObj(): T = jacksonObjectMapper.readValue(this, object : TypeReference<T>() {})
 
+fun <T : Any> String.toObj(type: TypeReference<T>): T = jacksonObjectMapper.readValue(this, type)
+
+fun <T : Any> String.toObj(type: Class<T>): T = jacksonObjectMapper.readValue(this, type)
+
 /**
  * deserialize Json String as T
  *

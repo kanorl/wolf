@@ -12,7 +12,7 @@ abstract class Resource : Ordered {
 
     override fun order(): Int = id
 
-    fun afterPropertiesSet() {
+    open fun afterPropertiesSet() {
 
     }
 

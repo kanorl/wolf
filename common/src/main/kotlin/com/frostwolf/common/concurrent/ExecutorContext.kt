@@ -16,7 +16,7 @@ object ExecutorContext{
     private val logger by getLogger()
     private var taskPools = arrayOf<TaskPool>()
     private val defaultTaskPool = createTaskPool("default")
-    private val executor = ForkJoinPool(cpuNum, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { t, e -> logger.error(e.message, e) }, true)
+    private val executor = ForkJoinPool(cpuNum, ForkJoinPool.defaultForkJoinWorkerThreadFactory, Thread.UncaughtExceptionHandler { _, e -> logger.error(e.message, e) }, true)
     private val transferer = Executors.newSingleThreadExecutor(NamedThreadFactory("task-transferer", true))
 
     init {
